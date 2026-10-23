@@ -7,6 +7,8 @@ annualized) from a mixed-frequency dynamic factor model (`DynamicFactorMQ`).
 **Latest nowcast (data as of 2026-10-23):** 2026Q3 **2.2%** (68% band 1.1 to 3.2%); 2026Q4 **1.8%** (68% band −0.3 to 4.0%).
 
 **Backtest:** 2010–2026, excluding 2020Q1–2021Q1. RMSE is **1.59 pp**, against 2.23 for an AR(1) (29% lower) and 1.90 for a naive monthly-GDP tracker (16% lower).
+
+**Live page:** https://333hai.github.io/canada-gdp-nowcast/
 <!-- nowcast:end -->
 
 ## Run

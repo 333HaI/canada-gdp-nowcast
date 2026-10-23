@@ -1,7 +1,7 @@
 {
   "vintage": "2026-10-23",
-  "fetched_at": "2026-10-23T20:13:31+00:00",
-  "fred_mode": "public_csv",
+  "fetched_at": "2026-10-23T21:48:50+00:00",
+  "fred_mode": "api",
   "sources": {
     "statcan": "ok",
     "boc": "ok",
