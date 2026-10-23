@@ -1,15 +1,14 @@
 name: Weekly nowcast
 
-# Fridays 14:00 UTC (10:00 EDT / 09:00 EST): after the 08:30 ET Labour Force
-# Survey release. Can also be run by hand from the Actions tab.
+# fridays 14:00 UTC, after the 8:30 ET LFS release
 on:
   schedule:
     - cron: "0 14 * * 5"
   workflow_dispatch:
 
 permissions:
-  contents: write   # commit the new snapshot and history
-  pages: write      # deploy the page
+  contents: write
+  pages: write
   id-token: write
 
 concurrency:

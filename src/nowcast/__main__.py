@@ -7,7 +7,7 @@
     python -m nowcast report                         # build site/index.html
     python -m nowcast backtest --name base [--blocks global,real,output]
 
-The weekly workflow runs: fetch -> update -> report.
+The weekly job runs fetch, update, report.
 """
 from __future__ import annotations
 

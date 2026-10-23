@@ -1,13 +1,10 @@
-"""The live record: append-only CSVs under output/.
+"""Live record, append-only CSVs in output/.
 
-  nowcast_history.csv   one row per (vintage, quarter): the nowcast and bands
-  news_history.csv      one row per (vintage, quarter, series): news impacts
-  first_releases.csv    one row per quarter: StatCan's first published value,
-                        captured from the first snapshot that contains it
+nowcast_history.csv  vintage x quarter
+news_history.csv     vintage x quarter x series
+first_releases.csv   quarter -> StatCan's first published value
 
-Rows are only ever appended. A row whose key already exists is skipped, so
-re-running a week never rewrites what was published. Each nowcast is scored
-against the first release, not the latest revision.
+Existing keys are skipped, never overwritten.
 """
 from __future__ import annotations
 
@@ -45,7 +42,7 @@ def read(name: str, out: Path = OUT) -> pd.DataFrame:
 
 
 def append(name: str, rows: pd.DataFrame, out: Path = OUT) -> int:
-    """Append rows whose key is new; never modify existing rows."""
+    """Append rows with new keys, skip the rest."""
     if rows.empty:
         return 0
     cols = {HISTORY: HISTORY_COLS, NEWS: NEWS_COLS, FIRST: FIRST_COLS}[name]
@@ -81,11 +78,9 @@ def record_news(vintage: str, previous: str, quarter, news: pd.DataFrame, out: P
 
 
 def record_first_releases(vintage: str, target_qoq: pd.Series, out: Path = OUT) -> int:
-    """Capture first releases of quarters we have nowcast.
+    """Record first releases, but only for quarters we actually nowcast.
 
-    Only quarters that appear in the nowcast history are recorded. Quarters
-    published before launch are skipped, because this snapshot holds their
-    revised values, not their first releases.
+    Anything published before launch is already revised in the snapshot.
     """
     nowcast_q = set(read(HISTORY, out)["quarter"])
     done = set(read(FIRST, out)["quarter"])
@@ -98,7 +93,7 @@ def record_first_releases(vintage: str, target_qoq: pd.Series, out: Path = OUT) 
 
 
 def scorecard(out: Path = OUT) -> pd.DataFrame:
-    """Every live nowcast joined to its quarter's first release (NaN until out)."""
+    """History joined to first releases."""
     h, f = read(HISTORY, out), read(FIRST, out)
     if h.empty:
         return h.assign(first_release=pd.Series(dtype=float), error=pd.Series(dtype=float))
@@ -108,7 +103,7 @@ def scorecard(out: Path = OUT) -> pd.DataFrame:
 
 
 def live_rmse(out: Path = OUT) -> pd.DataFrame:
-    """Per released quarter: the latest nowcast before release and RMSE over all weeks."""
+    """Per released quarter: last nowcast and RMSE over its weeks."""
     s = scorecard(out).dropna(subset=["first_release"])
     if s.empty:
         return pd.DataFrame(columns=["quarter", "first_release", "last_nowcast", "weeks", "rmse"])

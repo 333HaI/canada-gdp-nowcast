@@ -1,15 +1,8 @@
-"""DynamicFactorMQ wrapper: fit, nowcast with bands, and news decomposition.
+"""Thin wrapper around statsmodels DynamicFactorMQ (Banbura & Modugno, EM).
 
-The model (Bańbura & Modugno 2014, statsmodels' `DynamicFactorMQ`) is a
-mixed-frequency dynamic factor model estimated by EM. Monthly series load on
-the factor blocks listed in config/series.yaml; quarterly GDP growth is linked
-to the monthly factors by the Mariano-Murasawa (1, 2, 3, 2, 1) weights, so the
-quarter's value is the model's estimate at the quarter's last month. Missing
-values and the ragged edge need no special treatment: the Kalman smoother
-fills them in.
-
-All growth rates inside the model are q/q (or m/m) log % changes; only the
-reported nowcast is annualized.
+Quarterly GDP ties to the monthly factors through the Mariano-Murasawa
+weights, so a quarter's value is read off its last month. Everything inside
+is in log % changes; only the reported nowcast gets annualized.
 """
 from __future__ import annotations
 
@@ -29,10 +22,8 @@ BANDS = (0.68, 0.90)
 
 @dataclass(frozen=True)
 class Spec:
-    """Model specification. `blocks` picks which config blocks are used:
-    series keep only the blocks listed here (every series has `global`).
-    The default won the 2010-2026 backtest against global-only, global+real
-    and global+output (output/backtest/variants.md)."""
+    # blocks: which of the config blocks to use. This set did best in the
+    # backtest, see output/backtest/variants.md
     blocks: tuple = ("global", "real", "output")
     factor_order: int = 1
     idiosyncratic_ar1: bool = True
@@ -42,8 +33,7 @@ class Spec:
 
 def prepare(monthly: pd.DataFrame, quarterly: pd.DataFrame, cfg: Config,
             end: pd.Period) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Drop empty columns and pad the monthly frame with missing rows up to
-    `end` (the last month of the latest quarter to be nowcast)."""
+    """Drop unusable columns, pad monthly rows with NaN out to `end`."""
     monthly = monthly.loc[:, _usable(monthly, 24)]
     quarterly = quarterly.loc[:, _usable(quarterly, 8)]
     if cfg.target not in quarterly:
@@ -57,8 +47,7 @@ def prepare(monthly: pd.DataFrame, quarterly: pd.DataFrame, cfg: Config,
 
 
 def _usable(df: pd.DataFrame, min_obs: int) -> list:
-    """Columns the model can estimate: enough observations and not constant
-    (e.g. the policy-rate change during the 2009-10 effective lower bound)."""
+    # constant series break the model, e.g. the policy rate change at the 2009-10 lower bound
     return [c for c in df if df[c].count() >= min_obs and df[c].std() > 0]
 
 
@@ -84,17 +73,16 @@ def fit(monthly, quarterly, cfg: Config, spec: Spec = Spec(), start_params=None)
 
 
 def refilter(res, monthly, quarterly):
-    """Same parameters and standardization, new data (a different vintage)."""
+    """Re-run the filter on another vintage with the same params."""
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         return res.apply(monthly, endog_quarterly=quarterly, retain_standardization=True)
 
 
 def nowcast(res, quarters, target: str) -> pd.DataFrame:
-    """Annualized nowcast and 68% / 90% bands for each quarter in `quarters`.
+    """Annualized nowcast + 68/90% bands per quarter.
 
-    Bands are Gaussian intervals from the smoothed state covariance (parameter
-    uncertainty is not included), mapped through the annualization.
+    Bands come from the smoothed state covariance, so no parameter uncertainty.
     """
     quarters = [pd.Period(q, freq="Q") for q in quarters]
     months = [q.asfreq("M", how="end") for q in quarters]
@@ -116,18 +104,16 @@ def nowcast(res, quarters, target: str) -> pd.DataFrame:
 
 
 def _sd_from_conf_int(pred, target):
-    # conf_int is reported in original units; var_pred_mean is standardized
+    # conf_int is in original units, var_pred_mean isn't
     ci = pred.conf_int(alpha=2 * stats.norm.sf(1))  # +/- 1 sd
     cols = [c for c in ci.columns if c.endswith(target)]
     return (ci[cols[1]] - ci[cols[0]]) / 2
 
 
 def news(res_new, res_old, quarter, target: str, cfg: Config | None = None) -> pd.DataFrame:
-    """Which data releases moved the nowcast for `quarter` between two vintages.
+    """Per-series impact on `quarter` between two vintages (+ a revisions row).
 
-    Returns one row per updated series with its impact on the q/q and on the
-    annualized nowcast, plus data revisions as one extra row. Impacts sum to
-    the change in the nowcast (`attrs['prev']` -> `attrs['post']`).
+    Impacts add up to attrs["post"] - attrs["prev"].
     """
     month = pd.Period(quarter, freq="Q").asfreq("M", how="end")
     with warnings.catch_warnings():
@@ -150,8 +136,7 @@ def news(res_new, res_old, quarter, target: str, cfg: Config | None = None) -> p
     out = pd.DataFrame(rows, columns=["series", "impact_qoq"])
     prev = float(nr.prev_impacted_forecasts[target].iloc[0])
     post = float(nr.post_impacted_forecasts[target].iloc[0])
-    # scale q/q impacts so the annualized ones add up exactly to the change
-    # in the annualized nowcast (annualization is not linear)
+    # annualizing isn't linear, so rescale so the annualized impacts still add up
     d_ann = float(annualize(post) - annualize(prev))
     scale = d_ann / (post - prev) if abs(post - prev) > 1e-12 else 4 * np.exp(4 * post / 100)
     out["impact_ann"] = out["impact_qoq"] * scale
@@ -165,8 +150,7 @@ def news(res_new, res_old, quarter, target: str, cfg: Config | None = None) -> p
 
 
 def open_quarters(quarterly: pd.DataFrame, target: str, today: pd.Timestamp) -> list[pd.Period]:
-    """Quarters to nowcast: every quarter after the last published one, up to
-    and including the quarter containing `today`."""
+    """Unpublished quarters up to the current one."""
     last_pub = quarterly[target].dropna().index.max()
     current = pd.Period(today, freq="Q")
     return list(pd.period_range(last_pub + 1, current, freq="Q"))

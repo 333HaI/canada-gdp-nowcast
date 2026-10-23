@@ -1,10 +1,4 @@
-"""Build the static page (site/index.html) from the files under output/.
-
-The page is one self-contained HTML file: the data are embedded as JSON and
-the charts are drawn client-side with Plotly.js. Colors are CSS tokens (light
-and dark), read by the chart code at render time, so charts follow the
-reader's color scheme.
-"""
+"""Builds site/index.html from output/. Data is inlined as JSON, charts are Plotly.js."""
 from __future__ import annotations
 
 import json
@@ -48,7 +42,7 @@ def backtest_data(out: Path = H.OUT) -> dict | None:
     if not path.exists():
         return None
     pred = pd.read_csv(path)
-    # one point per quarter: the nowcast from the last vintage inside the quarter
+    # last nowcast made inside each quarter
     eoq = (pred[pred["month"] == 3].sort_values("vintage")
            .groupby("target").last().reset_index())
     path_df = eoq[["target", "actual", "model", "ar1", "naive", "covid"]]
@@ -93,29 +87,24 @@ def pages_url() -> str | None:
     return f"https://{owner.lower()}.github.io/{repo}/"
 
 
-def _pct(v: float, d: int = 1) -> str:
-    return f"{v:.{d}f}%".replace("-", "−")
-
-
 def readme_block(data: dict) -> str:
     L, bt = data["latest"], data["backtest"]
-    parts = [f"{q['quarter']} **{_pct(q['nowcast'])}** (68% band {_pct(q['lo68'])[:-1]} to {_pct(q['hi68'])})"
+    parts = [f"{q['quarter']} {q['nowcast']:.1f}% (68%: {q['lo68']:.1f} to {q['hi68']:.1f})"
              for q in L["nowcast"]]
-    lines = [f"**Latest nowcast (data as of {L['vintage']}):** " + "; ".join(parts) + "."]
+    lines = [f"Nowcast as of {L['vintage']}: " + ", ".join(parts) + "."]
     if bt:
         o = bt["overall"]
-        lines += ["", f"**Backtest:** {bt['start'][:4]}–{bt['end'][:4]}, excluding 2020Q1–2021Q1. "
-                  f"RMSE is **{o['model']:.2f} pp**, against {o['ar1']:.2f} for an AR(1) "
-                  f"({100 * (1 - o['model'] / o['ar1']):.0f}% lower) and {o['naive']:.2f} for a naive "
-                  f"monthly-GDP tracker ({100 * (1 - o['model'] / o['naive']):.0f}% lower)."]
+        lines += ["", f"Backtest {bt['start'][:4]}-{bt['end'][:4]} (excl. 2020Q1-2021Q1): RMSE "
+                  f"{o['model']:.2f} vs {o['ar1']:.2f} for an AR(1) and {o['naive']:.2f} for a naive "
+                  f"monthly GDP tracker."]
     url = pages_url()
     if url:
-        lines += ["", f"**Live page:** {url}"]
+        lines += ["", f"Live: {url}"]
     return "\n".join(lines)
 
 
 def update_readme(data: dict, path: Path = ROOT / "README.md") -> bool:
-    """Rewrite the block between the nowcast:start / nowcast:end markers."""
+    """Replace the text between the nowcast:start/end markers."""
     text = path.read_text(encoding="utf-8")
     start, end = "<!-- nowcast:start", "<!-- nowcast:end -->"
     if start not in text or end not in text:
@@ -150,314 +139,199 @@ TEMPLATE = r"""<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Canada GDP Nowcast</title>
-<meta name="description" content="Weekly nowcast of Canadian quarterly real GDP growth from a mixed-frequency dynamic factor model.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2 12 L6 7 L9 9 L14 3' stroke='%232a78d6' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<meta name="description" content="Weekly nowcast of Canadian real GDP growth.">
+<link rel="icon" href="data:,">
 <style>
-:root {
-  color-scheme: light;
-  --surface: #fcfcfb; --surface-2: #f4f3f0; --border: #e4e3de;
-  --text-1: #0b0b0b; --text-2: #52514e; --text-3: #75746f;
-  --grid: #e9e8e4; --band-68: rgba(42,120,214,0.16); --band-90: rgba(42,120,214,0.08);
-  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --ink: #0b0b0b;
-  --pos: #2a78d6; --neg: #e34948; --excluded: rgba(82,81,78,0.08);
-}
+:root { color-scheme: light; --bg: #fff; --fg: #111; --dim: #777; --rule: #e4e4e4;
+  --line2: #a8a8a8; --band1: rgba(17,17,17,.12); --band2: rgba(17,17,17,.05); }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --surface: #1a1a19; --surface-2: #232321; --border: #34342f;
-    --text-1: #f0efec; --text-2: #c3c2b7; --text-3: #9a9990;
-    --grid: #2e2e2b; --band-68: rgba(57,135,229,0.22); --band-90: rgba(57,135,229,0.11);
-    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --ink: #f0efec;
-    --pos: #3987e5; --neg: #e66767; --excluded: rgba(195,194,183,0.07);
-  }
+  :root:not([data-theme="light"]) { color-scheme: dark; --bg: #0f0f0f; --fg: #e4e4e4; --dim: #8a8a8a;
+    --rule: #262626; --line2: #5c5c5c; --band1: rgba(228,228,228,.16); --band2: rgba(228,228,228,.07); }
 }
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --surface: #1a1a19; --surface-2: #232321; --border: #34342f;
-  --text-1: #f0efec; --text-2: #c3c2b7; --text-3: #9a9990;
-  --grid: #2e2e2b; --band-68: rgba(57,135,229,0.22); --band-90: rgba(57,135,229,0.11);
-  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --ink: #f0efec;
-  --pos: #3987e5; --neg: #e66767; --excluded: rgba(195,194,183,0.07);
-}
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--surface); color: var(--text-1);
-  font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-main { max-width: 1040px; margin: 0 auto; padding: 32px 16px 64px; }
-h1 { font-size: 28px; line-height: 1.2; margin: 0 0 6px; font-weight: 650; letter-spacing: -0.01em; }
-h2 { font-size: 18px; margin: 0 0 4px; font-weight: 620; }
-.sub { color: var(--text-2); margin: 0; }
-.muted { color: var(--text-3); font-size: 13px; }
-section { margin-top: 40px; }
-.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 24px; }
-.tile { background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; }
-.tile .label { color: var(--text-2); font-size: 14px; }
-.tile .value { font-size: 44px; font-weight: 640; line-height: 1.1; margin: 6px 0 4px; font-variant-numeric: proportional-nums; }
-.tile .bands { color: var(--text-2); font-size: 14px; }
-.tile .delta { font-size: 13px; color: var(--text-3); margin-top: 6px; }
-.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-top: 12px; }
-.card { border: 1px solid var(--border); border-radius: 10px; padding: 14px 14px 6px; min-width: 0; }
-.card h3 { font-size: 14px; font-weight: 600; margin: 0 0 2px; }
-.chart { width: 100%; min-height: 260px; }
-.empty { color: var(--text-3); padding: 24px 4px; font-size: 14px; }
-table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
-th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
-th:first-child, td:first-child { text-align: left; }
-th { color: var(--text-2); font-weight: 560; }
-.tablewrap { overflow-x: auto; margin-top: 8px; }
-.legend { display: flex; flex-wrap: wrap; gap: 16px; color: var(--text-2); font-size: 13px; margin: 6px 0 0; }
-.key { display: inline-flex; align-items: center; gap: 6px; }
-.key i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; }
-.key i.sq { width: 10px; height: 10px; border-radius: 3px; }
-.headline { font-size: 15px; margin-top: 10px; }
-ul { padding-left: 20px; margin: 8px 0; } li { margin: 4px 0; color: var(--text-2); }
-a { color: var(--s1); }
-footer { margin-top: 48px; color: var(--text-3); font-size: 13px; }
+:root[data-theme="dark"] { color-scheme: dark; --bg: #0f0f0f; --fg: #e4e4e4; --dim: #8a8a8a;
+  --rule: #262626; --line2: #5c5c5c; --band1: rgba(228,228,228,.16); --band2: rgba(228,228,228,.07); }
+html { background: var(--bg); }
+body { margin: 0; background: var(--bg); color: var(--fg);
+  font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+main { max-width: 780px; margin: 0 auto; padding: 28px 16px 48px; }
+h1 { font-size: 15px; margin: 0; font-weight: 700; }
+h2 { font-size: 13px; margin: 28px 0 6px; font-weight: 700; }
+p { margin: 4px 0; }
+.dim { color: var(--dim); }
+a { color: inherit; }
+table { border-collapse: collapse; font-variant-numeric: tabular-nums; }
+td, th { padding: 2px 20px 2px 0; text-align: right; white-space: nowrap; font-weight: 400; }
+td:first-child, th:first-child { text-align: left; }
+th { color: var(--dim); }
+.big td:nth-child(2) { font-weight: 700; }
+.big td:last-child { text-align: left; }
+.scroll { overflow-x: auto; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 8px 24px; }
+.chart { width: 100%; height: 190px; }
+.k { display: inline-block; width: 14px; border-top: 2px solid; vertical-align: middle; margin-right: 4px; }
+ul { margin: 4px 0; padding-left: 18px; }
+footer { margin-top: 32px; color: var(--dim); }
 </style>
 </head>
 <body>
 <main>
-  <header>
-    <h1>Canadian GDP nowcast</h1>
-    <p class="sub">Real GDP growth, expenditure-based, quarter over quarter at an annualized rate.
-      Updated every Friday.</p>
-    <p class="muted" id="meta"></p>
-  </header>
+<h1>canadian gdp nowcast</h1>
+<p class="dim">real GDP (expenditure), q/q at annual rate. re-estimated every friday.</p>
+<p class="dim" id="meta"></p>
 
-  <div class="tiles" id="tiles"></div>
+<h2>now</h2>
+<div class="scroll"><table class="big" id="now"></table></div>
 
-  <section>
-    <h2>How the nowcast has moved</h2>
-    <p class="sub">One point per weekly update, with 68% and 90% bands. The diamond marks StatCan's first release.</p>
-    <div class="grid2" id="tracks"></div>
-  </section>
+<h2>track</h2>
+<div class="pair" id="tracks"></div>
 
-  <section>
-    <h2>What moved it this week</h2>
-    <p class="sub" id="news-sub">Contribution of each new data release to the change in the nowcast, percentage points.</p>
-    <div class="grid2" id="news"></div>
-  </section>
+<h2 id="news-h">news</h2>
+<div class="pair" id="news"></div>
 
-  <section>
-    <h2>Live record</h2>
-    <p class="sub">Every weekly nowcast is kept unedited and scored against StatCan's first release of that quarter.</p>
-    <div id="live"></div>
-  </section>
+<h2>live record</h2>
+<div id="live"></div>
 
-  <section id="bt">
-    <h2>Backtest</h2>
-    <p class="sub" id="bt-sub"></p>
-    <p class="headline" id="bt-headline"></p>
-    <div class="grid2">
-      <div class="card">
-        <h3>End-of-quarter nowcast vs published GDP</h3>
-        <div class="legend"><span class="key"><i style="background:var(--ink)"></i>Published GDP</span>
-          <span class="key"><i style="background:var(--s1)"></i>Model nowcast</span></div>
-        <div class="chart" id="bt-path"></div>
-      </div>
-      <div class="card">
-        <h3>Error by horizon (RMSE, pp)</h3>
-        <div class="legend"><span class="key"><i class="sq" style="background:var(--s1)"></i>Model</span>
-          <span class="key"><i class="sq" style="background:var(--s2)"></i>AR(1)</span>
-          <span class="key"><i class="sq" style="background:var(--s3)"></i>Naive tracker</span></div>
-        <div class="chart" id="bt-rmse"></div>
-      </div>
-    </div>
-    <div class="tablewrap" id="bt-table"></div>
-  </section>
+<div id="bt">
+<h2 id="bt-h">backtest</h2>
+<p id="bt-line"></p>
+<div class="scroll"><table id="bt-table"></table></div>
+<p style="margin-top:12px"><span class="k" style="border-color:var(--fg)"></span>nowcast at end of quarter
+  &nbsp; <span class="k" style="border-color:var(--line2)"></span>published</p>
+<div class="chart" id="bt-path" style="height:220px"></div>
+</div>
 
-  <section>
-    <h2>Method and limitations</h2>
-    <ul>
-      <li>A mixed-frequency dynamic factor model (statsmodels <code>DynamicFactorMQ</code>, EM estimation)
-        on 20 monthly indicators from Statistics Canada, the Bank of Canada and FRED, with global,
-        real-activity and output factor blocks. Missing values and the ragged edge are handled by the Kalman smoother.</li>
-      <li>The backtest is pseudo-real-time. It uses today's revised data, with each series' availability rebuilt from typical
-        release lags, so data revisions are ignored. The live record above has no such caveat.</li>
-      <li>March to December 2020 is masked in estimation, and 2020Q1 to 2021Q1 are excluded from the backtest scores.</li>
-      <li>Bands come from the model's state uncertainty and exclude parameter uncertainty.</li>
-    </ul>
-  </section>
+<h2>notes</h2>
+<ul class="dim">
+  <li>DynamicFactorMQ (statsmodels), 20 monthly series from StatCan, BoC and FRED, three factor blocks.</li>
+  <li>backtest is pseudo real-time: today's data, release lags simulated, no revisions.</li>
+  <li>Mar-Dec 2020 masked when estimating. bands leave out parameter uncertainty.</li>
+  <li>live nowcasts are never edited and get scored against StatCan's first release.</li>
+</ul>
 
-  <footer id="footer"></footer>
+<footer id="footer"></footer>
 </main>
 
 <script id="data" type="application/json">__DATA__</script>
 <script src="__PLOTLY__"></script>
 <script>
 const D = JSON.parse(document.getElementById("data").textContent);
-const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-const pct = (v, d = 1) => (v == null || isNaN(v)) ? "–" : (v < 0 ? "−" : "") + Math.abs(v).toFixed(d) + "%";
-const pp = (v, d = 2) => (v == null || isNaN(v)) ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(d);
-const el = (tag, attrs = {}, html = "") => { const e = document.createElement(tag); Object.assign(e, attrs); e.innerHTML = html; return e; };
-const qDate = q => { const [y, n] = [+q.slice(0, 4), +q.slice(5)]; return `${y}-${String(3 * n - 1).padStart(2, "0")}-15`; };
-const qLabel = q => q.replace("Q", " Q");
+const v = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const f = (x, d = 1) => x == null || isNaN(x) ? "-" : x.toFixed(d);
+const sgn = (x, d = 2) => x == null || isNaN(x) ? "-" : (x > 0 ? "+" : "") + x.toFixed(d);
+const $ = id => document.getElementById(id);
+const row = (cells, tag = "td") => "<tr>" + cells.map(c => `<${tag}>${c}</${tag}>`).join("") + "</tr>";
+const qd = q => `${q.slice(0, 4)}-${String(3 * +q.slice(5) - 1).padStart(2, "0")}-15`;
+const L = D.latest, B = D.backtest;
 
-function layout(extra = {}) {
-  const axis = { gridcolor: css("--grid"), zerolinecolor: css("--border"), linecolor: css("--border"),
-    tickfont: { color: css("--text-3"), size: 12 }, automargin: true, fixedrange: true };
-  return Object.assign({
-    paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
-    font: { family: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif", color: css("--text-2"), size: 12 },
-    margin: { l: 8, r: 12, t: 12, b: 8 }, showlegend: false, height: 280,
-    hoverlabel: { bgcolor: css("--surface"), bordercolor: css("--border"), font: { color: css("--text-1") } },
-    xaxis: Object.assign({}, axis, extra.xaxis || {}), yaxis: Object.assign({}, axis, extra.yaxis || {}),
-  }, Object.fromEntries(Object.entries(extra).filter(([k]) => k !== "xaxis" && k !== "yaxis")));
+function text() {
+  $("meta").textContent = `data as of ${L.vintage}. built ${D.built}.`;
+  const n = L.nowcast.length;
+  $("now").innerHTML = row(["quarter", "nowcast", "68%", "90%", "1w chg", ""], "th") + L.nowcast.map((r, i) => {
+    const nw = L.news[r.quarter];
+    return row([r.quarter, f(r.nowcast) + "%", `${f(r.lo68)} to ${f(r.hi68)}`, `${f(r.lo90)} to ${f(r.hi90)}`,
+      nw ? sgn(nw.post - nw.prev) : "-", `<span class="dim">${i === n - 1 ? "current" : "not yet published"}</span>`]);
+  }).join("");
+
+  if (D.live.length) {
+    $("live").innerHTML = `<div class="scroll"><table>` +
+      row(["quarter", "first release", "last nowcast", "error", "weeks", "rmse"], "th") +
+      D.live.map(r => row([r.quarter, f(r.first_release), f(r.last_nowcast), sgn(r.last_nowcast - r.first_release),
+        r.weeks, f(r.rmse, 2)])).join("") + "</table></div>";
+  } else {
+    $("live").innerHTML = `<p class="dim">nothing scored yet. first one when StatCan publishes ${L.nowcast[0].quarter}.</p>`;
+  }
+
+  if (B) {
+    $("bt-h").textContent = `backtest ${B.start}-${B.end}, excl. 2020Q1-2021Q1`;
+    const o = B.overall;
+    $("bt-line").textContent = `rmse ${f(o.model, 2)} vs ${f(o.ar1, 2)} ar(1), ${f(o.naive, 2)} naive.  ` +
+      `bands hit ${Math.round(100 * B.coverage["68"])}% / ${Math.round(100 * B.coverage["90"])}%.  n=${o.n}`;
+    $("bt-table").innerHTML = row(["made in", "model", "ar(1)", "naive", "n"], "th") +
+      B.rmse.map(r => row([r.horizon.replace("after Q end, ", "after q end, "), f(r.model, 2), f(r.ar1, 2), f(r.naive, 2), r.n])).join("");
+  } else $("bt").style.display = "none";
+
+  $("footer").innerHTML = "data: Statistics Canada, Bank of Canada, FRED. not an official forecast." +
+    (D.repo ? ` <a href="${D.repo}">source</a>` : "");
+}
+
+function base(extra = {}) {
+  const ax = { showgrid: false, zeroline: false, showline: true, linecolor: v("--rule"), ticks: "outside",
+    tickcolor: v("--rule"), ticklen: 3, tickfont: { color: v("--dim"), size: 11 }, fixedrange: true, automargin: true };
+  return Object.assign({ paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)", showlegend: false,
+    font: { family: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace", size: 11, color: v("--dim") },
+    margin: { l: 4, r: 8, t: 8, b: 4 }, hovermode: "closest",
+    hoverlabel: { bgcolor: v("--bg"), bordercolor: v("--rule"), font: { family: "ui-monospace, monospace", color: v("--fg") } },
+    xaxis: Object.assign({}, ax, extra.xaxis), yaxis: Object.assign({}, ax, extra.yaxis) },
+    Object.fromEntries(Object.entries(extra).filter(([k]) => k !== "xaxis" && k !== "yaxis")));
 }
 const CFG = { displayModeBar: false, responsive: true };
 
-function renderStatic() {
-  const L = D.latest;
-  document.getElementById("meta").textContent =
-    `Data as of ${L.vintage} · page built ${D.built}`;
-  const tiles = document.getElementById("tiles");
-  const qs = L.nowcast.map(r => r.quarter);
-  L.nowcast.forEach((r, i) => {
-    const role = i === qs.length - 1 ? "current quarter" : "previous quarter, not yet published";
-    const n = L.news[r.quarter];
-    const delta = n ? `${pp(n.post - n.prev)} pp since ${L.previous_vintage}` : "First weekly update";
-    tiles.append(el("div", { className: "tile" }, `
-      <div class="label">${qLabel(r.quarter)} · ${role}</div>
-      <div class="value">${pct(r.nowcast)}</div>
-      <div class="bands">68% band ${pct(r.lo68)} to ${pct(r.hi68)} · 90% band ${pct(r.lo90)} to ${pct(r.hi90)}</div>
-      <div class="delta">${delta}</div>`));
-  });
-
-  const live = document.getElementById("live");
-  if (!D.live.length) {
-    live.append(el("p", { className: "empty" },
-      `No quarter nowcast live has been published yet. The first score arrives when StatCan releases ${qLabel(qs[0])} GDP.`));
-  } else {
-    const rows = D.live.map(r => `<tr><td>${qLabel(r.quarter)}</td><td>${pct(r.first_release)}</td>
-      <td>${pct(r.last_nowcast)}</td><td>${pp(r.last_nowcast - r.first_release)}</td><td>${r.weeks}</td><td>${r.rmse.toFixed(2)}</td></tr>`).join("");
-    live.append(el("div", { className: "tablewrap" }, `<table><thead><tr><th>Quarter</th><th>First release</th>
-      <th>Last nowcast</th><th>Error, pp</th><th>Weekly nowcasts</th><th>RMSE over all weeks</th></tr></thead><tbody>${rows}</tbody></table>`));
-  }
-
-  const B = D.backtest;
-  if (B) {
-    document.getElementById("bt-sub").textContent =
-      `Pseudo-real-time weekly nowcasts for ${qLabel(B.start)} to ${qLabel(B.end)}, excluding 2020 Q1 to 2021 Q1, annualized percentage points.`;
-    const imp = b => Math.round(100 * (1 - B.overall.model / B.overall[b]));
-    document.getElementById("bt-headline").innerHTML =
-      `RMSE <b>${B.overall.model.toFixed(2)}</b> vs ${B.overall.ar1.toFixed(2)} for an AR(1) (${imp("ar1")}% lower) and
-       ${B.overall.naive.toFixed(2)} for a naive monthly-GDP tracker (${imp("naive")}% lower), over ${B.overall.n.toLocaleString()} nowcasts.
-       The 68% / 90% bands contained the outcome ${Math.round(100 * B.coverage["68"])}% / ${Math.round(100 * B.coverage["90"])}% of the time.`;
-    const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
-    const rows = B.rmse.map(r => `<tr><td>${cap(r.horizon)}</td><td>${r.model.toFixed(2)}</td><td>${r.ar1.toFixed(2)}</td>
-      <td>${r.naive.toFixed(2)}</td><td>${(r.model / r.ar1).toFixed(2)}</td><td>${(r.model / r.naive).toFixed(2)}</td><td>${r.n}</td></tr>`).join("");
-    document.getElementById("bt-table").innerHTML = `<table><thead><tr><th>Horizon (when the nowcast was made)</th>
-      <th>Model</th><th>AR(1)</th><th>Naive</th><th>Model / AR(1)</th><th>Model / naive</th><th>n</th></tr></thead><tbody>${rows}</tbody></table>`;
-  } else {
-    document.getElementById("bt").style.display = "none";
-  }
-
-  const f = document.getElementById("footer");
-  f.innerHTML = (D.repo ? `Code, data and full method: <a href="${D.repo}">${D.repo.replace("https://", "")}</a>. ` : "")
-    + "Sources: Statistics Canada, Bank of Canada, FRED. Not an official forecast.";
-}
-
-function renderTracks() {
-  const box = document.getElementById("tracks");
-  box.innerHTML = "";
-  const open = D.latest.nowcast.map(r => r.quarter);
-  const recent = [...new Set(D.history.map(r => r.quarter))].sort().slice(-4);
-  const qs = [...new Set([...recent, ...open])].sort().slice(-2);
+function tracks() {
+  const box = $("tracks"); box.innerHTML = "";
+  const qs = [...new Set([...D.history.map(r => r.quarter), ...L.nowcast.map(r => r.quarter)])].sort().slice(-2);
   qs.forEach(q => {
-    const card = el("div", { className: "card" }, `<h3>${qLabel(q)}</h3>`);
-    const div = el("div", { className: "chart" });
-    card.append(div); box.append(card);
     const h = D.history.filter(r => r.quarter === q).sort((a, b) => a.vintage < b.vintage ? -1 : 1);
-    const x = h.map(r => r.vintage);
-    const band = (lo, hi, color) => [
-      { x, y: h.map(r => r[hi]), mode: "lines", line: { width: 0 }, hoverinfo: "skip" },
-      { x, y: h.map(r => r[lo]), mode: "lines", line: { width: 0 }, fill: "tonexty", fillcolor: color, hoverinfo: "skip" }];
-    const whisk = (lo, hi, w, color) => ({ x, y: h.map(r => r.nowcast), mode: "markers", hoverinfo: "skip",
-      marker: { size: 1, color: "rgba(0,0,0,0)" },
+    const wrap = document.createElement("div");
+    wrap.innerHTML = `<p>${q} <span class="dim">${h.length} week${h.length === 1 ? "" : "s"}</span></p>`;
+    const div = document.createElement("div"); div.className = "chart";
+    wrap.append(div); box.append(wrap);
+    const x = h.map(r => r.vintage), y = h.map(r => r.nowcast);
+    const area = (lo, hi, c) => [{ x, y: h.map(r => r[hi]), mode: "lines", line: { width: 0 }, hoverinfo: "skip" },
+      { x, y: h.map(r => r[lo]), mode: "lines", line: { width: 0 }, fill: "tonexty", fillcolor: c, hoverinfo: "skip" }];
+    const bar = (lo, hi, w, c) => ({ x, y, mode: "markers", marker: { size: 1, color: "rgba(0,0,0,0)" }, hoverinfo: "skip",
       error_y: { type: "data", symmetric: false, array: h.map(r => r[hi] - r.nowcast),
-        arrayminus: h.map(r => r.nowcast - r[lo]), thickness: w, width: 0, color } });
-    // a filled band needs at least a few weeks; until then show the bands as whiskers
-    const bands = h.length >= 3
-      ? [...band("lo90", "hi90", css("--band-90")), ...band("lo68", "hi68", css("--band-68"))]
-      : [whisk("lo90", "hi90", 2, css("--band-68")), whisk("lo68", "hi68", 8, css("--band-68"))];
-    const traces = [...bands,
-      { x, y: h.map(r => r.nowcast), mode: "lines+markers", line: { color: css("--s1"), width: 2 },
-        marker: { size: 9, color: css("--s1"), line: { color: css("--surface"), width: 2 } },
-        customdata: h.map(r => [r.lo68, r.hi68, r.lo90, r.hi90]),
-        hovertemplate: "%{x|%b %d, %Y}<br>Nowcast <b>%{y:.1f}%</b><br>68%: %{customdata[0]:.1f} to %{customdata[1]:.1f}<br>90%: %{customdata[2]:.1f} to %{customdata[3]:.1f}<extra></extra>" }];
+        arrayminus: h.map(r => r.nowcast - r[lo]), thickness: w, width: 0, color: c } });
+    const bands = h.length >= 3 ? [...area("lo90", "hi90", v("--band2")), ...area("lo68", "hi68", v("--band1"))]
+      : [bar("lo90", "hi90", 1, v("--line2")), bar("lo68", "hi68", 5, v("--line2"))];
+    const tr = [...bands, { x, y, mode: "lines+markers", line: { color: v("--fg"), width: 1.5 },
+      marker: { size: 5, color: v("--fg") }, customdata: h.map(r => [r.lo68, r.hi68]),
+      hovertemplate: "%{x}<br>%{y:.1f}%  (68%: %{customdata[0]:.1f} to %{customdata[1]:.1f})<extra></extra>" }];
     const fr = D.first.find(r => r.quarter === q);
-    if (fr) traces.push({ x: [fr.seen_in_vintage], y: [fr.first_release], mode: "markers+text",
-      marker: { symbol: "diamond", size: 11, color: css("--ink"), line: { color: css("--surface"), width: 2 } },
-      text: [`First release ${pct(fr.first_release)}`], textposition: "top left", textfont: { color: css("--text-1") },
-      hovertemplate: "First release %{y:.1f}%<extra></extra>" });
-    const xr = x.length > 1 ? undefined : [new Date(new Date(x[0]).getTime() - 35 * 864e5), new Date(new Date(x[0]).getTime() + 35 * 864e5)];
-    Plotly.react(div, traces, layout({ xaxis: { type: "date", range: xr, tickformat: "%b %d" },
-      yaxis: { ticksuffix: "%", zeroline: true }, hovermode: "closest" }), CFG);
-    if (h.length < 3) card.append(el("p", { className: "muted" },
-      `${h.length === 1 ? "One point" : "Two points"} so far, one added each week. Thick whisker: 68% band; thin: 90% band.`));
+    if (fr) tr.push({ x: [fr.seen_in_vintage], y: [fr.first_release], mode: "markers+text", text: ["first release"],
+      textposition: "middle left", textfont: { color: v("--dim"), size: 11 },
+      marker: { symbol: "x-thin", size: 9, line: { width: 1.5, color: v("--fg") } }, hovertemplate: "first release %{y:.1f}%<extra></extra>" });
+    const t0 = new Date(x[0] || L.vintage).getTime();
+    const xr = h.length > 1 ? undefined : [new Date(t0 - 30 * 864e5), new Date(t0 + 30 * 864e5)];
+    Plotly.react(div, tr, base({ xaxis: { type: "date", range: xr, tickformat: "%b %d" }, yaxis: { ticksuffix: "%" } }), CFG);
   });
 }
 
-function renderNews() {
-  const box = document.getElementById("news");
-  box.innerHTML = "";
-  const L = D.latest;
-  if (!Object.keys(L.news).length) {
-    box.append(el("p", { className: "empty" }, "The news decomposition needs two weekly snapshots, so it starts with the next update."));
-    return;
+function news() {
+  const box = $("news"); box.innerHTML = "";
+  const qs = Object.keys(L.news);
+  if (!qs.length) {
+    box.innerHTML = `<p class="dim">needs two weekly runs. starts next friday.</p>`; return;
   }
-  Object.entries(L.news).forEach(([q, n]) => {
-    const items = n.items.filter(r => Math.abs(r.impact_ann) >= 0.005).slice(0, 10).reverse();
-    const card = el("div", { className: "card" },
-      `<h3>${qLabel(q)}: ${pct(n.prev, 2)} → ${pct(n.post, 2)}</h3><p class="muted">Since ${L.previous_vintage}</p>`);
-    const div = el("div", { className: "chart" });
-    card.append(div); box.append(card);
-    if (!items.length) { div.replaceWith(el("p", { className: "empty" }, "No release moved this nowcast by 0.01 pp or more.")); return; }
-    const lim = Math.max(...items.map(r => Math.abs(r.impact_ann))) * 1.45;
-    Plotly.react(div, [{
-      type: "bar", orientation: "h", y: items.map(r => r.name), x: items.map(r => r.impact_ann),
-      marker: { color: items.map(r => r.impact_ann >= 0 ? css("--pos") : css("--neg")) },
-      text: items.map(r => pp(r.impact_ann)), textposition: "outside", cliponaxis: false,
-      textfont: { color: css("--text-1"), size: 12 },
-      hovertemplate: "%{y}<br><b>%{x:+.2f} pp</b><extra></extra>", width: 0.55 }],
-      layout({ height: 70 + 32 * items.length, barcornerradius: 4, hovermode: "closest",
-        xaxis: { range: [-lim, lim], zeroline: true, zerolinecolor: css("--text-3"), ticksuffix: "" },
-        yaxis: { gridcolor: "rgba(0,0,0,0)", tickfont: { color: css("--text-2"), size: 12 } } }), CFG);
+  $("news-h").textContent = `news since ${L.previous_vintage} (pp)`;
+  qs.forEach(q => {
+    const n = L.news[q], items = n.items.filter(r => Math.abs(r.impact_ann) >= 0.005).slice(0, 8);
+    const w = document.createElement("div");
+    w.innerHTML = `<p>${q}: ${f(n.prev, 2)} -> ${f(n.post, 2)}</p>` + (items.length
+      ? `<table>${items.map(r => row([r.name, sgn(r.impact_ann)])).join("")}</table>`
+      : `<p class="dim">nothing moved it by 0.01 or more</p>`);
+    box.append(w);
   });
 }
 
-function renderBacktest() {
-  const B = D.backtest;
+function backtest() {
   if (!B) return;
-  const p = B.path, x = p.map(r => qDate(r.target));
-  const lo = -6, hi = 9;
-  const off = p.filter(r => r.actual < lo || r.actual > hi).map(r => `${qLabel(r.target)} ${pct(r.actual, 0)}`);
+  const p = B.path, x = p.map(r => qd(r.target));
   Plotly.react("bt-path", [
-    { x, y: p.map(r => r.actual), mode: "lines", name: "Published GDP", line: { color: css("--ink"), width: 2 },
-      customdata: p.map(r => r.target), hovertemplate: "%{customdata}<br>Published <b>%{y:.1f}%</b><extra></extra>" },
-    { x, y: p.map(r => r.model), mode: "lines", name: "Model nowcast", line: { color: css("--s1"), width: 2 },
-      hovertemplate: "Nowcast <b>%{y:.1f}%</b><extra></extra>" }],
-    layout({ hovermode: "x unified", yaxis: { range: [lo, hi], ticksuffix: "%" }, xaxis: { type: "date" },
-      shapes: [{ type: "rect", xref: "x", yref: "paper", x0: "2020-01-01", x1: "2021-03-31", y0: 0, y1: 1,
-        fillcolor: css("--excluded"), line: { width: 0 }, layer: "below" }],
-      margin: { l: 8, r: 12, t: 26, b: 8 },
-      annotations: [{ x: "2020-08-15", y: 1, yref: "paper", yanchor: "bottom", showarrow: false,
-        text: "2020 Q1–2021 Q1 excluded, off scale", font: { size: 11, color: css("--text-3") } }] }), CFG);
-  const xs = B.rmse.map(r => r.horizon.replace("after Q end, month ", "+").replace("month ", "Month ")
-    .replace(/^\+(\d)$/, "After Q end<br>+$1 month"));
-  const bar = (key, name, color) => ({ type: "bar", name, x: xs, y: B.rmse.map(r => r[key]), marker: { color },
-    hovertemplate: `${name}<br>%{x}: <b>%{y:.2f}</b> pp<extra></extra>` });
-  Plotly.react("bt-rmse", [bar("model", "Model", css("--s1")), bar("ar1", "AR(1)", css("--s2")), bar("naive", "Naive tracker", css("--s3"))],
-    layout({ barmode: "group", bargap: 0.35, bargroupgap: 0.12, barcornerradius: 4, hovermode: "closest",
-      yaxis: { rangemode: "tozero" }, xaxis: { tickangle: 0, tickfont: { size: 11, color: css("--text-3") } } }), CFG);
+    { x, y: p.map(r => r.actual), mode: "lines", line: { color: v("--line2"), width: 1.5 },
+      customdata: p.map(r => r.target), hovertemplate: "%{customdata}  published %{y:.1f}%<extra></extra>" },
+    { x, y: p.map(r => r.model), mode: "lines", line: { color: v("--fg"), width: 1.5 },
+      hovertemplate: "nowcast %{y:.1f}%<extra></extra>" }],
+    base({ hovermode: "x", yaxis: { range: [-6, 9], ticksuffix: "%" }, xaxis: { type: "date" },
+      shapes: [{ type: "line", xref: "paper", x0: 0, x1: 1, y0: 0, y1: 0, line: { color: v("--rule"), width: 1 } }],
+      annotations: [{ x: "2020-08-15", y: 1, yref: "paper", yanchor: "top", showarrow: false,
+        text: "2020: off scale", font: { size: 10, color: v("--dim") } }] }), CFG);
 }
 
-function renderCharts() { renderTracks(); renderNews(); renderBacktest(); }
-renderStatic();
-if (window.Plotly) renderCharts();
-else document.querySelectorAll(".chart").forEach(c => c.replaceWith(el("p", { className: "empty" }, "Charts could not load (Plotly CDN unavailable). The tables above carry the numbers.")));
-const mq = matchMedia("(prefers-color-scheme: dark)");
-mq.addEventListener && mq.addEventListener("change", () => window.Plotly && renderCharts());
-new MutationObserver(() => window.Plotly && renderCharts()).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+const draw = () => { if (window.Plotly) { tracks(); backtest(); } };
+text(); news(); draw();
+if (!window.Plotly) document.querySelectorAll(".chart").forEach(c => c.outerHTML = `<p class="dim">charts didn't load</p>`);
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", draw);
+new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 </script>
 </body>
 </html>

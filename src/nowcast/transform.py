@@ -1,14 +1,6 @@
-"""Turn a raw snapshot into the stationary panel the model is estimated on.
+"""Snapshot -> stationary panel: splice, pivot, transform, mask.
 
-Steps, in order:
-  1. splice   series with several source ids are joined into one level series
-  2. pivot    to a wide monthly frame (PeriodIndex 'M') and quarterly frame ('Q')
-  3. transform each column per its `transform` in config/series.yaml
-  4. mask     observations inside settings.mask windows become NaN
-
-Standardization (demean, unit variance) is left to DynamicFactorMQ, which does
-it internally with `standardize=True` and maps forecasts back to original
-units. `standardize()` below is the same operation for use outside the model.
+No standardizing here, DynamicFactorMQ does that itself (standardize=True).
 """
 from __future__ import annotations
 
@@ -19,13 +11,11 @@ from .config import Config, Series
 
 
 def splice(levels: dict[str, pd.Series], ids: tuple) -> pd.Series:
-    """Join level series ordered oldest -> newest.
+    """Join level series, oldest id first.
 
-    Where two pieces overlap, the newer one is kept and the older one is
-    rescaled so the levels match at the first common period: growth rates of
-    each piece are preserved exactly. With no overlap the pieces are simply
-    concatenated, which leaves one invalid growth rate at the seam; that
-    period is set to NaN by `transform_series` via the `seams` attribute.
+    On overlap the newer series wins and the older one is rescaled to it at
+    the first common period. Without overlap they're just concatenated and
+    the seam period is recorded in attrs["seams"] (its growth rate is junk).
     """
     out = levels[ids[0]].dropna()
     seams = []
@@ -43,7 +33,7 @@ def splice(levels: dict[str, pd.Series], ids: tuple) -> pd.Series:
 
 
 def build_levels(raw: pd.DataFrame, cfg: Config) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
-    """Wide level frames (monthly, quarterly) plus splice seams per key."""
+    """Returns monthly levels, quarterly levels, seams per key."""
     cols = {"M": {}, "Q": {}}
     seams = {}
     for s in cfg.series:
@@ -93,7 +83,7 @@ def transform_series(x: pd.Series, how: str, seams=()) -> pd.Series:
 
 
 def apply_mask(df: pd.DataFrame, windows) -> pd.DataFrame:
-    """Set rows inside each [start, end] window (inclusive, 'YYYY-MM') to NaN."""
+    """NaN out each [start, end] month window. A quarter is masked if any of its months is."""
     df = df.copy()
     if df.empty:
         return df
@@ -105,7 +95,7 @@ def apply_mask(df: pd.DataFrame, windows) -> pd.DataFrame:
 
 
 def build_panel(raw: pd.DataFrame, cfg: Config, mask: bool = True) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Stationary monthly and quarterly frames, ready for DynamicFactorMQ."""
+    """(monthly, quarterly) transformed frames."""
     monthly, quarterly, seams = build_levels(raw, cfg)
     out = []
     for frame in (monthly, quarterly):
@@ -113,7 +103,7 @@ def build_panel(raw: pd.DataFrame, cfg: Config, mask: bool = True) -> tuple[pd.D
             {k: transform_series(frame[k], cfg.get(k).transform, seams.get(k, ())) for k in frame},
             index=frame.index,
         )
-        # drop the first period, which is NaN by construction for differenced series
+        # first row is NaN after differencing
         t = t.iloc[1:] if len(t) else t
         out.append(apply_mask(t, cfg.mask) if mask else t)
     return out[0], out[1]
@@ -125,7 +115,7 @@ def standardize(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series, pd.Series]:
 
 
 def annualize(q_growth_pct):
-    """q/q % (log) growth -> annualized % rate: 100 * (exp(4 g / 100) - 1)."""
+    """q/q log % -> annualized %."""
     return 100 * (np.exp(4 * np.asarray(q_growth_pct, dtype=float) / 100) - 1)
 
 

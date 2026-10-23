@@ -1,8 +1,4 @@
-"""One weekly update: fit on the latest snapshot, nowcast, news, and record.
-
-Called by `python -m nowcast update` (records) and `python -m nowcast nowcast`
-(prints only).
-"""
+"""The weekly run: fit, nowcast, news, record."""
 from __future__ import annotations
 
 import json
@@ -58,7 +54,7 @@ def weekly(vintage: str = "latest", spec: M.Spec = M.Spec(), cfg: Config | None 
 
 
 def write_latest(vintage, prev, nc, news, out: Path = H.OUT) -> Path:
-    """Current state for the web page (overwritten weekly; history is in the CSVs)."""
+    # for the page only, overwritten every week
     payload = {
         "vintage": vintage,
         "previous_vintage": prev,

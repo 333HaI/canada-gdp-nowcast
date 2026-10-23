@@ -73,5 +73,5 @@ def test_readme_block_is_rewritten_between_markers(tmp_path):
     assert R.update_readme(data, readme)
     text = readme.read_text(encoding="utf-8")
     assert "old" not in text and text.endswith("<!-- nowcast:end -->\nrest\n")
-    assert "2026Q3 **2.0%** (68% band \u22120.5 to 3.0%)" in text
+    assert "2026Q3 2.0% (68%: -0.5 to 3.0)" in text
     assert not R.update_readme(data, readme)  # idempotent

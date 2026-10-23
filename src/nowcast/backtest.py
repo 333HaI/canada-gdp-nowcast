@@ -1,25 +1,13 @@
-"""Pseudo-real-time backtest of the nowcast against two benchmarks.
+"""Pseudo-real-time backtest, weekly from 2010.
 
-For each weekly vintage date v (Fridays from 2010 on):
-  * every observation is treated as published iff
-        end of its reference period + series release_lag <= v
-    which rebuilds the ragged edge from typical release lags;
-  * every quarter not yet published at v, up to the quarter containing v, is
-    nowcast by the model and by both benchmarks;
-  * model parameters are re-estimated (EM, warm-started) at the first vintage
-    of each calendar quarter using only data available then, and held fixed
-    for the rest of the quarter's vintages.
+A data point counts as out once end of period + release_lag <= vintage date.
+Params are refit at the start of each quarter and held for its weeks.
+Uses today's data (no revisions) and scores against today's GDP.
 
-Limitations (stated in the README): data are the latest vintage, so the
-backtest ignores revisions; true first releases are not used for the inputs
-or for scoring. Scores are against today's published GDP.
-
-Benchmarks
-  ar1    AR(1) on q/q GDP growth, OLS on all available quarters, iterated to
-         the target quarter.
-  naive  Quarterly growth of the average level of monthly GDP by industry.
-         Months not yet published are filled at the average m/m growth of
-         the 12 latest published months.
+Benchmarks:
+  ar1    AR(1) on q/q GDP growth, iterated forward
+  naive  growth of the quarterly average of monthly GDP; missing months
+         filled with the trailing 12-month average growth
 """
 from __future__ import annotations
 
@@ -40,10 +28,8 @@ OUT_DIR = ROOT / "output" / "backtest"
 COVID = (pd.Period("2020Q1", "Q"), pd.Period("2021Q1", "Q"))
 
 
-# ------------------------------------------------------------- ragged edge
-
 def release_dates(frame: pd.DataFrame, cfg: Config) -> pd.DataFrame:
-    """Date each cell becomes public: end of period + the series' lag."""
+    """End of period + release lag, per cell."""
     ends = frame.index.to_timestamp(how="end").normalize()
     return pd.DataFrame(
         {k: ends + pd.Timedelta(days=cfg.get(k).release_lag) for k in frame},
@@ -60,8 +46,6 @@ def open_quarters(q_vintage: pd.Series, vintage: pd.Timestamp) -> list[pd.Period
                                 pd.Period(vintage, freq="Q"), freq="Q"))
 
 
-# --------------------------------------------------------------- benchmarks
-
 def ar1_forecast(y: pd.Series, target: pd.Period) -> float:
     y = y.dropna()
     pairs = pd.DataFrame({"x": y.shift(1, freq="Q"), "z": y}).dropna()
@@ -74,7 +58,7 @@ def ar1_forecast(y: pd.Series, target: pd.Period) -> float:
 
 
 def naive_forecast(levels: pd.Series, target: pd.Period) -> float:
-    """Levels: monthly GDP as published at the vintage (NaN = not yet out)."""
+    # levels: monthly GDP as of the vintage, NaN where not out yet
     lv = levels.dropna()
     g = np.log(lv).diff().dropna().tail(12).mean()
     months = pd.period_range(target.asfreq("M", "start") - 3, target.asfreq("M", "end"), freq="M")
@@ -88,8 +72,6 @@ def naive_forecast(levels: pd.Series, target: pd.Period) -> float:
     return 100 * np.log(cur / prev)
 
 
-# ----------------------------------------------------------------- main loop
-
 def run(raw: pd.DataFrame, cfg: Config, spec: M.Spec = M.Spec(),
         start: str = "2010-01-01", end: str | None = None, step_days: int = 7,
         first_target: str = "2010Q1") -> pd.DataFrame:
@@ -98,8 +80,7 @@ def run(raw: pd.DataFrame, cfg: Config, spec: M.Spec = M.Spec(),
     m_levels, _, _ = build_levels(raw, cfg)
     gdp_lv = m_levels["gdp_m"]
     rel_m, rel_q = release_dates(monthly, cfg), release_dates(quarterly, cfg)
-    # publication status comes from the unmasked target: a masked 2020 quarter
-    # is still published, it is just not used for estimation
+    # use the unmasked target here, 2020 quarters are masked but they did get published
     published = q_unmasked[cfg.target]
     rel_target = release_dates(q_unmasked, cfg)[cfg.target]
     rel_lv = release_dates(m_levels[["gdp_m"]], cfg)["gdp_m"]
@@ -150,8 +131,6 @@ def run(raw: pd.DataFrame, cfg: Config, spec: M.Spec = M.Spec(),
     return out
 
 
-# ----------------------------------------------------------------- scoring
-
 MODELS = ("model", "ar1", "naive")
 HORIZON_LABEL = {1: "month 1", 2: "month 2", 3: "month 3",
                  4: "after Q end, month 1", 5: "after Q end, month 2"}
@@ -173,7 +152,7 @@ def score(pred: pd.DataFrame, exclude_covid: bool = True) -> pd.DataFrame:
 
 
 def coverage(pred: pd.DataFrame, exclude_covid: bool = True) -> pd.Series:
-    """Share of actuals inside the model's 68% / 90% bands (q/q scale)."""
+    """How often the outcome lands inside the 68/90% bands."""
     from scipy import stats
     d = pred[~pred["covid"]] if exclude_covid else pred
     lq = lambda a: 25 * np.log1p(np.asarray(a) / 100)  # annualized -> q/q log %
@@ -182,9 +161,11 @@ def coverage(pred: pd.DataFrame, exclude_covid: bool = True) -> pd.Series:
 
 
 def dm_test(pred: pd.DataFrame, bench: str, exclude_covid: bool = True) -> tuple[float, float]:
-    """Diebold-Mariano on squared errors, model vs `bench`, all horizons pooled.
-    Newey-West variance with lag = 13 weekly vintages (overlapping nowcasts of
-    the same quarter are strongly correlated). Negative stat = model better."""
+    """DM test on squared errors vs `bench`, all horizons pooled.
+
+    Newey-West with 26 lags since nowcasts of the same quarter overlap a lot.
+    Negative stat means the model is better.
+    """
     from scipy import stats
     d = pred[~pred["covid"]] if exclude_covid else pred
     d = d.sort_values(["vintage", "target"])
@@ -222,7 +203,7 @@ def save(pred: pd.DataFrame, name: str, out_dir: Path = OUT_DIR) -> Path:
 
 
 def compare(names: dict[str, str], out_dir: Path = OUT_DIR) -> Path:
-    """Overall ex-COVID scores for several saved runs, one row per variant."""
+    """Side-by-side scores for saved runs."""
     rows = []
     for name, label in names.items():
         pred = pd.read_csv(out_dir / f"predictions_{name}.csv")

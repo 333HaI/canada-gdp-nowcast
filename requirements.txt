@@ -1,7 +1,4 @@
-# Exact versions the backtest and the live record were produced with.
-# The weekly workflow installs these so a library release can't silently change
-# the model between weeks (statsmodels 0.15 changes the EM step, for example).
-# Upgrade deliberately: bump, re-run the backtest, commit both together.
+# pinned to what the backtest ran with. statsmodels 0.15 breaks the fit.
 numpy==2.4.6
 pandas==3.0.3
 patsy==1.0.2

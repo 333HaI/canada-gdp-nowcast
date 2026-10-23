@@ -1,1 +1,1 @@
-"""Self-updating nowcast of Canadian quarterly real GDP growth."""
+"""Canadian GDP nowcast."""

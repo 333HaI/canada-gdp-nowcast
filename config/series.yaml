@@ -1,50 +1,26 @@
-# Canadian GDP nowcast: series definitions.
+# series used by the model
 #
-# Every series the model uses is listed here. Nothing about a series
-# (where it comes from, how it is made stationary, when it is released)
-# lives anywhere else.
+# id           StatCan vector, BoC Valet name, FRED id, or a CSV path (manual).
+#              a list = splice, oldest first
+# freq         M or Q, native_freq D means daily, averaged to months
+# transform    dlog (100 * log diff), diff, or level
+# blocks       factor blocks it can load on (global / real / output),
+#              model.Spec.blocks picks which are used
+# release_lag  usual days after the end of the period until it's out,
+#              only used by the backtest
 #
-# Fields
-#   key            short name used throughout the code and in output files
-#   name           human-readable label (used on the web page / news table)
-#   source         statcan | boc | fred | manual
-#   id             source identifier: StatCan vector number, BoC Valet series
-#                  name, FRED series id, or a CSV path for `manual`.
-#                  A list means "splice": ids ordered oldest -> newest; the
-#                  newer series wins where they overlap and the older one is
-#                  rescaled to it (ratio splice at the first common month).
-#   table          StatCan table number, for reference only
-#   freq           frequency used by the model: M (monthly) or Q (quarterly)
-#   native_freq    frequency at the source if different (D = daily); daily
-#                  data are averaged to monthly before saving
-#   transform      how the level is made stationary (see transform.py):
-#                    dlog  100 * (log x_t - log x_{t-1})   period % growth
-#                    diff  x_t - x_{t-1}                    for rates / yields
-#                    level x_t                              already stationary
-#   blocks         factor blocks the series may load on. Which blocks are
-#                  actually used is a model choice (model.Spec.blocks):
-#                    global  every series
-#                    real    real-activity indicators
-#                    output  quarterly GDP and monthly GDP by industry
-#   release_lag    typical days from END of the reference period to first
-#                  publication. Approximate; used only to rebuild the ragged
-#                  edge in the pseudo-real-time backtest.
-#
-# Vector IDs were verified against the WDS API on 2026-10-23. Release lags
-# were checked against the release dates of the latest data points that day
-# (e.g. Q2 2026 GDP on Aug 28 = 59 days, July monthly GDP on Sep 29 = 60).
+# ids and lags checked against WDS on 2026-10-23 (e.g. Q2 GDP came out
+# Aug 28 = 59 days, July monthly GDP Sep 29 = 60)
 
 settings:
-  start: "1997-01-01"     # first month pulled; monthly GDP by industry begins here
+  start: "1997-01-01"     # monthly GDP by industry starts here
   target: gdp_q
-  # Observations inside these windows are set to missing before estimation
-  # (COVID). Turn off by emptying the list. The backtest decides whether
-  # 2020 is also excluded from scoring.
+  # set to missing before fitting (covid)
   mask:
     - ["2020-03", "2020-12"]
 
 series:
-  # ---------------------------------------------------------------- target
+  # target
   - key: gdp_q
     name: Real GDP, expenditure-based (quarterly)
     source: statcan
@@ -55,7 +31,7 @@ series:
     blocks: [global, real, output]
     release_lag: 60
 
-  # ---------------------------------------------- StatCan: monthly output
+  # StatCan: monthly output
   - key: gdp_m
     name: Real GDP by industry, all industries
     source: statcan
@@ -96,9 +72,7 @@ series:
     blocks: [global, real, output]
     release_lag: 60
 
-  # Advance (flash) estimate of monthly GDP published alongside each monthly
-  # GDP release. It is not available as a WDS vector, so it is entered by
-  # hand from The Daily: one row per reference month, % m/m.
+  # flash estimate from The Daily, not in WDS so it's typed in by hand (% m/m)
   - key: gdp_flash
     name: Real GDP advance estimate (% m/m)
     source: manual
@@ -108,7 +82,7 @@ series:
     blocks: [global, real, output]
     release_lag: 30
 
-  # ------------------------------------------------- StatCan: labour
+  # StatCan: labour
   - key: lfs_emp
     name: LFS employment, 15+
     source: statcan
@@ -129,7 +103,7 @@ series:
     blocks: [global, real]
     release_lag: 9
 
-  # ------------------------------------------ StatCan: sales and trade
+  # StatCan: sales and trade
   - key: mfg_sales
     name: Real manufacturing sales (2017 $)
     source: statcan
@@ -180,7 +154,7 @@ series:
     blocks: [global, real]
     release_lag: 36
 
-  # --------------------------------------------- StatCan: housing
+  # StatCan: housing
   - key: permits
     name: Building permits, total value
     source: statcan
@@ -201,7 +175,7 @@ series:
     blocks: [global]
     release_lag: 17
 
-  # ------------------------------------------------- Bank of Canada
+  # Bank of Canada
   - key: policy_rate
     name: Target for the overnight rate
     source: boc
@@ -250,7 +224,7 @@ series:
     blocks: [global]
     release_lag: 3
 
-  # ----------------------------------------------------------- FRED
+  # FRED
   - key: us_ip
     name: US industrial production
     source: fred

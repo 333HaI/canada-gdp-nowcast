@@ -1,13 +1,9 @@
-"""Clients for StatCan WDS, Bank of Canada Valet, FRED, and hand-entered series.
+"""Data clients: StatCan WDS, BoC Valet, FRED, plus hand-entered CSVs.
 
-Every client returns the same long format, one row per (source id, period):
-
-    key, source_id, date, value, release_time
-
-`date` is the first day of the reference period. `release_time` is the
-publication time StatCan attaches to the data point (latest release or
-revision, not the first release) and is empty for other sources. Daily
-series are averaged to calendar months here, so snapshots stay small.
+All of them return long rows: key, source_id, date, value, release_time.
+date is the start of the reference period. release_time only exists for
+StatCan and is the latest release/revision time, not the first release.
+Daily series get averaged to months here.
 """
 from __future__ import annotations
 
@@ -52,10 +48,8 @@ def _frame(rows: list[dict]) -> pd.DataFrame:
     return df
 
 
-# --------------------------------------------------------------------- StatCan
-
 def fetch_statcan(series: list[Series], start: str, http: requests.Session) -> pd.DataFrame:
-    """All StatCan vectors in one request (WDS accepts a comma-separated list)."""
+    # WDS takes a comma-separated list, so one request covers everything
     owner = {vid: s.key for s in series for vid in s.ids}
     if not owner:
         return _frame([])
@@ -86,8 +80,6 @@ def fetch_statcan(series: list[Series], start: str, http: requests.Session) -> p
     return _frame(rows)
 
 
-# ---------------------------------------------------------------- Bank of Canada
-
 def fetch_boc(series: list[Series], start: str, http: requests.Session) -> pd.DataFrame:
     if not series:
         return _frame([])
@@ -112,10 +104,8 @@ def fetch_boc(series: list[Series], start: str, http: requests.Session) -> pd.Da
     return _frame([]) if not frames else pd.concat(frames, ignore_index=True)[COLUMNS]
 
 
-# ------------------------------------------------------------------------ FRED
-
 def fetch_fred(series: list[Series], start: str, http: requests.Session) -> pd.DataFrame:
-    """Uses the official API when FRED_API_KEY is set, the public CSV otherwise."""
+    # API if FRED_API_KEY is set, otherwise the public fredgraph CSV
     key = os.environ.get("FRED_API_KEY")
     frames = []
     for s in series:
@@ -139,8 +129,6 @@ def fetch_fred(series: list[Series], start: str, http: requests.Session) -> pd.D
     return _frame(pd.concat(frames, ignore_index=True)[COLUMNS].to_dict("records"))
 
 
-# ---------------------------------------------------------------------- manual
-
 def fetch_manual(series: list[Series]) -> pd.DataFrame:
     frames = []
     for s in series:
@@ -156,14 +144,11 @@ def fetch_manual(series: list[Series]) -> pd.DataFrame:
     return _frame(pd.concat(frames, ignore_index=True).to_dict("records"))
 
 
-# ----------------------------------------------------------------- orchestration
-
 def fetch_all(cfg: Config) -> tuple[pd.DataFrame, dict]:
-    """Fetch every configured series. Returns (raw long frame, per-source status).
+    """Returns (raw rows, status per source).
 
-    A failing source is logged and recorded rather than aborting the run, so one
-    flaky API doesn't stop the weekly update; the caller decides whether the
-    result is usable (the target must always be present).
+    A source that fails is logged and marked in the status dict instead of
+    raising. The CLI still exits non-zero if the target is missing.
     """
     http = session()
     jobs = {
@@ -179,25 +164,19 @@ def fetch_all(cfg: Config) -> tuple[pd.DataFrame, dict]:
             frames.append(df)
             status[name] = "ok"
             log.info("%s: %d rows", name, len(df))
-        except Exception as exc:  # noqa: BLE001 - recorded in the manifest
+        except Exception as exc:  # noqa: BLE001
             log.error("%s fetch failed: %s", name, exc)
             status[name] = f"failed: {exc}"
     raw = pd.concat(frames, ignore_index=True) if frames else _frame([])
     return raw.sort_values(["key", "source_id", "date"]).reset_index(drop=True), status
 
 
-# -------------------------------------------------------------------- snapshots
-
 VINTAGE_DIR = ROOT / "data" / "vintages"
 
 
 def save_snapshot(raw: pd.DataFrame, status: dict, cfg: Config,
                   vintage: str | None = None, root: Path = VINTAGE_DIR) -> Path:
-    """Write data/vintages/YYYY-MM-DD/{raw.csv, manifest.json}.
-
-    Re-running on the same day overwrites that day's snapshot; earlier days are
-    never touched.
-    """
+    """data/vintages/YYYY-MM-DD/raw.csv + manifest.json. Same day overwrites."""
     vintage = vintage or date.today().isoformat()
     out = root / vintage
     out.mkdir(parents=True, exist_ok=True)
