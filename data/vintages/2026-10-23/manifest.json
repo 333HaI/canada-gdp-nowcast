@@ -1,0 +1,213 @@
+{
+  "vintage": "2026-10-23",
+  "fetched_at": "2026-10-23T20:13:31+00:00",
+  "fred_mode": "public_csv",
+  "sources": {
+    "statcan": "ok",
+    "boc": "ok",
+    "fred": "ok",
+    "manual": "ok"
+  },
+  "series": {
+    "gdp_q": {
+      "source": "statcan",
+      "ids": [
+        "62305752"
+      ],
+      "n_obs": 118,
+      "first": "1997-01-01",
+      "last": "2026-04-01"
+    },
+    "gdp_m": {
+      "source": "statcan",
+      "ids": [
+        "65201210"
+      ],
+      "n_obs": 355,
+      "first": "1997-01-01",
+      "last": "2026-07-01"
+    },
+    "gdp_goods": {
+      "source": "statcan",
+      "ids": [
+        "65201211"
+      ],
+      "n_obs": 355,
+      "first": "1997-01-01",
+      "last": "2026-07-01"
+    },
+    "gdp_services": {
+      "source": "statcan",
+      "ids": [
+        "65201212"
+      ],
+      "n_obs": 355,
+      "first": "1997-01-01",
+      "last": "2026-07-01"
+    },
+    "gdp_ip": {
+      "source": "statcan",
+      "ids": [
+        "65201219"
+      ],
+      "n_obs": 355,
+      "first": "1997-01-01",
+      "last": "2026-07-01"
+    },
+    "gdp_flash": {
+      "source": "manual",
+      "ids": [
+        "data/manual/gdp_flash.csv"
+      ],
+      "n_obs": 0,
+      "first": null,
+      "last": null
+    },
+    "lfs_emp": {
+      "source": "statcan",
+      "ids": [
+        "2062811"
+      ],
+      "n_obs": 357,
+      "first": "1997-01-01",
+      "last": "2026-09-01"
+    },
+    "lfs_hours": {
+      "source": "statcan",
+      "ids": [
+        "4391505"
+      ],
+      "n_obs": 357,
+      "first": "1997-01-01",
+      "last": "2026-09-01"
+    },
+    "mfg_sales": {
+      "source": "statcan",
+      "ids": [
+        "123263908"
+      ],
+      "n_obs": 296,
+      "first": "2002-01-01",
+      "last": "2026-08-01"
+    },
+    "wholesale_vol": {
+      "source": "statcan",
+      "ids": [
+        "120586538"
+      ],
+      "n_obs": 272,
+      "first": "2004-01-01",
+      "last": "2026-08-01"
+    },
+    "retail_sales": {
+      "source": "statcan",
+      "ids": [
+        "52367097",
+        "1446859483"
+      ],
+      "n_obs": 428,
+      "first": "1997-01-01",
+      "last": "2026-08-01"
+    },
+    "exports": {
+      "source": "statcan",
+      "ids": [
+        "87008955"
+      ],
+      "n_obs": 356,
+      "first": "1997-01-01",
+      "last": "2026-08-01"
+    },
+    "imports": {
+      "source": "statcan",
+      "ids": [
+        "87008839"
+      ],
+      "n_obs": 356,
+      "first": "1997-01-01",
+      "last": "2026-08-01"
+    },
+    "permits": {
+      "source": "statcan",
+      "ids": [
+        "4667",
+        "1675119645"
+      ],
+      "n_obs": 356,
+      "first": "1997-01-01",
+      "last": "2026-08-01"
+    },
+    "housing_starts": {
+      "source": "statcan",
+      "ids": [
+        "52300157"
+      ],
+      "n_obs": 357,
+      "first": "1997-01-01",
+      "last": "2026-09-01"
+    },
+    "policy_rate": {
+      "source": "boc",
+      "ids": [
+        "V39079"
+      ],
+      "n_obs": 211,
+      "first": "2009-04-01",
+      "last": "2026-10-01"
+    },
+    "goc_2y": {
+      "source": "boc",
+      "ids": [
+        "BD.CDN.2YR.DQ.YLD"
+      ],
+      "n_obs": 310,
+      "first": "2001-01-01",
+      "last": "2026-10-01"
+    },
+    "goc_10y": {
+      "source": "boc",
+      "ids": [
+        "BD.CDN.10YR.DQ.YLD"
+      ],
+      "n_obs": 310,
+      "first": "2001-01-01",
+      "last": "2026-10-01"
+    },
+    "ceer": {
+      "source": "boc",
+      "ids": [
+        "CEER_BROADNM"
+      ],
+      "n_obs": 333,
+      "first": "1999-01-01",
+      "last": "2026-09-01"
+    },
+    "bcpi": {
+      "source": "boc",
+      "ids": [
+        "M.BCPI"
+      ],
+      "n_obs": 357,
+      "first": "1997-01-01",
+      "last": "2026-09-01"
+    },
+    "us_ip": {
+      "source": "fred",
+      "ids": [
+        "INDPRO"
+      ],
+      "n_obs": 357,
+      "first": "1997-01-01",
+      "last": "2026-09-01"
+    },
+    "us_payrolls": {
+      "source": "fred",
+      "ids": [
+        "PAYEMS"
+      ],
+      "n_obs": 357,
+      "first": "1997-01-01",
+      "last": "2026-09-01"
+    }
+  }
+}

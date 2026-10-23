@@ -1,0 +1,270 @@
+# Canadian GDP nowcast: series definitions.
+#
+# Every series the model uses is listed here. Nothing about a series
+# (where it comes from, how it is made stationary, when it is released)
+# lives anywhere else.
+#
+# Fields
+#   key            short name used throughout the code and in output files
+#   name           human-readable label (used on the web page / news table)
+#   source         statcan | boc | fred | manual
+#   id             source identifier: StatCan vector number, BoC Valet series
+#                  name, FRED series id, or a CSV path for `manual`.
+#                  A list means "splice": ids ordered oldest -> newest; the
+#                  newer series wins where they overlap and the older one is
+#                  rescaled to it (ratio splice at the first common month).
+#   table          StatCan table number, for reference only
+#   freq           frequency used by the model: M (monthly) or Q (quarterly)
+#   native_freq    frequency at the source if different (D = daily); daily
+#                  data are averaged to monthly before saving
+#   transform      how the level is made stationary (see transform.py):
+#                    dlog  100 * (log x_t - log x_{t-1})   period % growth
+#                    diff  x_t - x_{t-1}                    for rates / yields
+#                    level x_t                              already stationary
+#   blocks         factor blocks the series may load on. Which blocks are
+#                  actually used is a model choice (model.Spec.blocks):
+#                    global  every series
+#                    real    real-activity indicators
+#                    output  quarterly GDP and monthly GDP by industry
+#   release_lag    typical days from END of the reference period to first
+#                  publication. Approximate; used only to rebuild the ragged
+#                  edge in the pseudo-real-time backtest.
+#
+# Vector IDs were verified against the WDS API on 2026-10-23. Release lags
+# were checked against the release dates of the latest data points that day
+# (e.g. Q2 2026 GDP on Aug 28 = 59 days, July monthly GDP on Sep 29 = 60).
+
+settings:
+  start: "1997-01-01"     # first month pulled; monthly GDP by industry begins here
+  target: gdp_q
+  # Observations inside these windows are set to missing before estimation
+  # (COVID). Turn off by emptying the list. The backtest decides whether
+  # 2020 is also excluded from scoring.
+  mask:
+    - ["2020-03", "2020-12"]
+
+series:
+  # ---------------------------------------------------------------- target
+  - key: gdp_q
+    name: Real GDP, expenditure-based (quarterly)
+    source: statcan
+    id: 62305752
+    table: 36-10-0104-01
+    freq: Q
+    transform: dlog          # q/q % growth; annualized only for reporting
+    blocks: [global, real, output]
+    release_lag: 60
+
+  # ---------------------------------------------- StatCan: monthly output
+  - key: gdp_m
+    name: Real GDP by industry, all industries
+    source: statcan
+    id: 65201210
+    table: 36-10-0434-01
+    freq: M
+    transform: dlog
+    blocks: [global, real, output]
+    release_lag: 60
+
+  - key: gdp_goods
+    name: Real GDP, goods-producing industries
+    source: statcan
+    id: 65201211
+    table: 36-10-0434-01
+    freq: M
+    transform: dlog
+    blocks: [global, real, output]
+    release_lag: 60
+
+  - key: gdp_services
+    name: Real GDP, services-producing industries
+    source: statcan
+    id: 65201212
+    table: 36-10-0434-01
+    freq: M
+    transform: dlog
+    blocks: [global, real, output]
+    release_lag: 60
+
+  - key: gdp_ip
+    name: Real GDP, industrial production
+    source: statcan
+    id: 65201219
+    table: 36-10-0434-01
+    freq: M
+    transform: dlog
+    blocks: [global, real, output]
+    release_lag: 60
+
+  # Advance (flash) estimate of monthly GDP published alongside each monthly
+  # GDP release. It is not available as a WDS vector, so it is entered by
+  # hand from The Daily: one row per reference month, % m/m.
+  - key: gdp_flash
+    name: Real GDP advance estimate (% m/m)
+    source: manual
+    id: data/manual/gdp_flash.csv
+    freq: M
+    transform: level         # already a growth rate
+    blocks: [global, real, output]
+    release_lag: 30
+
+  # ------------------------------------------------- StatCan: labour
+  - key: lfs_emp
+    name: LFS employment, 15+
+    source: statcan
+    id: 2062811
+    table: 14-10-0287-01
+    freq: M
+    transform: dlog
+    blocks: [global, real]
+    release_lag: 9
+
+  - key: lfs_hours
+    name: LFS total actual hours worked
+    source: statcan
+    id: 4391505
+    table: 14-10-0289-01
+    freq: M
+    transform: dlog
+    blocks: [global, real]
+    release_lag: 9
+
+  # ------------------------------------------ StatCan: sales and trade
+  - key: mfg_sales
+    name: Real manufacturing sales (2017 $)
+    source: statcan
+    id: 123263908
+    table: 16-10-0013-01
+    freq: M
+    transform: dlog
+    blocks: [global, real]
+    release_lag: 45
+
+  - key: wholesale_vol
+    name: Wholesale sales, volume
+    source: statcan
+    id: 120586538
+    table: 20-10-0003-01
+    freq: M
+    transform: dlog
+    blocks: [global, real]
+    release_lag: 45
+
+  - key: retail_sales
+    name: Retail sales (nominal)
+    source: statcan
+    id: [52367097, 1446859483]   # 20-10-0008 (1991-2022) spliced to 20-10-0056 (2017-)
+    table: 20-10-0056-01
+    freq: M
+    transform: dlog
+    blocks: [global, real]
+    release_lag: 53
+
+  - key: exports
+    name: Merchandise exports, BOP basis
+    source: statcan
+    id: 87008955
+    table: 12-10-0011-01
+    freq: M
+    transform: dlog
+    blocks: [global, real]
+    release_lag: 36
+
+  - key: imports
+    name: Merchandise imports, BOP basis
+    source: statcan
+    id: 87008839
+    table: 12-10-0011-01
+    freq: M
+    transform: dlog
+    blocks: [global, real]
+    release_lag: 36
+
+  # --------------------------------------------- StatCan: housing
+  - key: permits
+    name: Building permits, total value
+    source: statcan
+    id: [4667, 1675119645]       # 34-10-0008 (to 2017) then 34-10-0292 (2018-); no overlap
+    table: 34-10-0292-01
+    freq: M
+    transform: dlog
+    blocks: [global]
+    release_lag: 44
+
+  - key: housing_starts
+    name: Housing starts, all areas (SAAR)
+    source: statcan
+    id: 52300157
+    table: 34-10-0158-01
+    freq: M
+    transform: dlog
+    blocks: [global]
+    release_lag: 17
+
+  # ------------------------------------------------- Bank of Canada
+  - key: policy_rate
+    name: Target for the overnight rate
+    source: boc
+    id: V39079
+    freq: M
+    native_freq: D
+    transform: diff
+    blocks: [global]
+    release_lag: 0
+
+  - key: goc_2y
+    name: GoC 2-year benchmark yield
+    source: boc
+    id: BD.CDN.2YR.DQ.YLD
+    freq: M
+    native_freq: D
+    transform: diff
+    blocks: [global]
+    release_lag: 0
+
+  - key: goc_10y
+    name: GoC 10-year benchmark yield
+    source: boc
+    id: BD.CDN.10YR.DQ.YLD
+    freq: M
+    native_freq: D
+    transform: diff
+    blocks: [global]
+    release_lag: 0
+
+  - key: ceer
+    name: Nominal CEER (monthly)
+    source: boc
+    id: CEER_BROADNM
+    freq: M
+    transform: dlog
+    blocks: [global]
+    release_lag: 5
+
+  - key: bcpi
+    name: BoC commodity price index
+    source: boc
+    id: M.BCPI
+    freq: M
+    transform: dlog
+    blocks: [global]
+    release_lag: 3
+
+  # ----------------------------------------------------------- FRED
+  - key: us_ip
+    name: US industrial production
+    source: fred
+    id: INDPRO
+    freq: M
+    transform: dlog
+    blocks: [global]
+    release_lag: 16
+
+  - key: us_payrolls
+    name: US nonfarm payrolls
+    source: fred
+    id: PAYEMS
+    freq: M
+    transform: dlog
+    blocks: [global]
+    release_lag: 5
