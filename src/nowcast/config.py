@@ -26,6 +26,7 @@ class Series:
     release_lag: int
     native_freq: str | None = None
     table: str | None = None
+    model: bool = True  # false = fetched and saved, but not used in the fit
 
 
 @dataclass(frozen=True)
@@ -71,6 +72,7 @@ def load_config(path: str | Path = DEFAULT_CONFIG) -> Config:
                 release_lag=int(item.get("release_lag", 0)),
                 native_freq=item.get("native_freq"),
                 table=item.get("table"),
+                model=bool(item.get("model", True)),
             )
         )
     cfg = Config(

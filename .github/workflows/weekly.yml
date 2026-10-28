@@ -34,6 +34,11 @@ jobs:
       - name: Test
         run: python -m pytest -q
 
+      # scraped from The Daily, so don't let a page change stop the run
+      - name: GDP flash estimates
+        continue-on-error: true
+        run: python -m nowcast flash
+
       - name: Fetch data and save snapshot
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}

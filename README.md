@@ -15,6 +15,7 @@ Live: https://333hai.github.io/canada-gdp-nowcast/
 
 ```bash
 pip install -r requirements.txt && pip install --no-deps -e .
+python -m nowcast flash      # add new GDP flash estimates from The Daily
 python -m nowcast fetch      # download everything into data/vintages/<today>/
 python -m nowcast nowcast    # fit and print the nowcast + what moved it
 python -m nowcast update     # same, but also append to output/*.csv
@@ -31,10 +32,10 @@ fresh backtest.
 ## Weekly job
 
 `.github/workflows/weekly.yml` runs Fridays at 14:00 UTC, a few hours after
-the Labour Force Survey comes out. It runs the tests, takes a snapshot,
-refits, appends the nowcast and the news breakdown to `output/`, rebuilds the
-page, deploys it to Pages and commits the data back. So the git log is the
-audit trail.
+the Labour Force Survey comes out. It runs the tests, picks up any new
+flash estimate, takes a snapshot, refits, appends the nowcast and the news
+breakdown to `output/`, rebuilds the page, deploys it to Pages and commits
+the data back. So the git log is the audit trail.
 
 To set it up on a new repo, add a `FRED_API_KEY` secret and set Pages to
 deploy from GitHub Actions. GitHub turns off cron workflows on public repos
@@ -43,9 +44,10 @@ after 60 days with no activity, so check the Actions tab now and then.
 ## Data
 
 Everything is defined in [config/series.yaml](config/series.yaml): vector
-IDs, transformations, factor blocks and typical release lags. There are 20
-monthly series (StatCan, Bank of Canada, FRED), and the target is quarterly
-real GDP (v62305752).
+IDs, transformations, factor blocks and typical release lags. The model uses
+20 monthly series (StatCan, Bank of Canada, FRED), and the target is
+quarterly real GDP (v62305752). The GDP flash estimate is collected too but
+isn't in the fit, see below.
 
 A few details:
 
@@ -54,8 +56,16 @@ A few details:
   one. Where they don't overlap, the growth rate at the seam is set to
   missing.
 - Daily BoC rates are averaged to months.
-- The monthly GDP flash estimate isn't in the WDS API, so it goes into
-  `data/manual/gdp_flash.csv` by hand (`date,value,release_date`, % m/m).
+- The monthly GDP flash estimate isn't in the WDS API. `python -m nowcast
+  flash` reads it out of The Daily into `data/manual/gdp_flash.csv` (% m/m).
+  Each GDP release links to the one before, so it walks back until it hits
+  a release it already has, which for the first run meant back to 2020.
+  March 2020 (a separate notice) and May 2022 (released as an Analysis in
+  Brief because of site maintenance) were typed in by hand. It's set to
+  `model: false`: adding it to the factor model didn't help in the backtest
+  (RMSE 1.442 vs 1.446 since 2023, and slightly worse after quarter end), so
+  for now it's only archived. Details in
+  [output/backtest/flash.md](output/backtest/flash.md).
 - Each weekly pull is kept as-is in `data/vintages/YYYY-MM-DD/`. From
   2026-10-23 onwards that's a proper real-time archive.
 
@@ -117,5 +127,7 @@ trailing 12-month average growth. Every individual nowcast is in
   RMSE is a bit flattering.
 - The bands leave out parameter uncertainty.
 - In the last month before release the naive tracker is still slightly
-  better (0.59 vs 0.64). Filling in the flash estimates should help there.
+  better (0.59 vs 0.64). The flash estimate should help there in principle,
+  but as just another factor-model input it doesn't (see flash.md). It
+  probably needs a bridge step that treats it as monthly GDP plus noise.
 - The BoC overnight rate series on Valet only starts in 2009.

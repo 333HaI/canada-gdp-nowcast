@@ -73,5 +73,16 @@ def test_readme_block_is_rewritten_between_markers(tmp_path):
     assert R.update_readme(data, readme)
     text = readme.read_text(encoding="utf-8")
     assert "old" not in text and text.endswith("<!-- nowcast:end -->\nrest\n")
-    assert "2026Q3 2.0% (68%: -0.5 to 3.0)" in text
+    assert "2026Q3 2.0% (68%: -0.5 to 3.0)" in text and "Live record" not in text
     assert not R.update_readme(data, readme)  # idempotent
+
+
+def test_readme_block_shows_live_record():
+    data = {"latest": {"vintage": "2027-03-05",
+                       "nowcast": [{"quarter": "2027Q1", "nowcast": 1.8, "lo68": 0.5, "hi68": 3.0}]},
+            "backtest": None,
+            "live": [{"quarter": "2026Q3", "first_release": 1.6, "last_nowcast": 2.2},
+                     {"quarter": "2026Q4", "first_release": 1.0, "last_nowcast": 1.4}]}
+    block = R.readme_block(data)
+    assert "Live record: 2026Q4 came in at 1.0% (first release), last nowcast 1.4%." in block
+    assert "over 2 quarters: 0.51." in block

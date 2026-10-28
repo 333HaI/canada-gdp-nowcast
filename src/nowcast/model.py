@@ -34,6 +34,7 @@ class Spec:
 def prepare(monthly: pd.DataFrame, quarterly: pd.DataFrame, cfg: Config,
             end: pd.Period) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Drop unusable columns, pad monthly rows with NaN out to `end`."""
+    monthly = monthly[[c for c in monthly if cfg.get(c).model]]
     monthly = monthly.loc[:, _usable(monthly, 24)]
     quarterly = quarterly.loc[:, _usable(quarterly, 8)]
     if cfg.target not in quarterly:

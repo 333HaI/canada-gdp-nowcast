@@ -92,6 +92,15 @@ def readme_block(data: dict) -> str:
     parts = [f"{q['quarter']} {q['nowcast']:.1f}% (68%: {q['lo68']:.1f} to {q['hi68']:.1f})"
              for q in L["nowcast"]]
     lines = [f"Nowcast as of {L['vintage']}: " + ", ".join(parts) + "."]
+    live = data.get("live") or []
+    if live:
+        r = live[-1]
+        line = (f"Live record: {r['quarter']} came in at {r['first_release']:.1f}% (first release), "
+                f"last nowcast {r['last_nowcast']:.1f}%.")
+        if len(live) > 1:
+            err = np.array([x["last_nowcast"] - x["first_release"] for x in live])
+            line += f" RMSE of the last nowcast over {len(live)} quarters: {np.sqrt(np.mean(err ** 2)):.2f}."
+        lines += ["", line]
     if bt:
         o = bt["overall"]
         lines += ["", f"Backtest {bt['start'][:4]}-{bt['end'][:4]} (excl. 2020Q1-2021Q1): RMSE "

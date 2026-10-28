@@ -72,7 +72,9 @@ series:
     blocks: [global, real, output]
     release_lag: 60
 
-  # flash estimate from The Daily, not in WDS so it's typed in by hand (% m/m)
+  # flash estimate from The Daily, not in WDS. `python -m nowcast flash` scrapes it (% m/m).
+  # saved in every snapshot but kept out of the fit: no gain in the backtest,
+  # see output/backtest/flash.md
   - key: gdp_flash
     name: Real GDP advance estimate (% m/m)
     source: manual
@@ -81,6 +83,7 @@ series:
     transform: level         # already a growth rate
     blocks: [global, real, output]
     release_lag: 30
+    model: false
 
   # StatCan: labour
   - key: lfs_emp

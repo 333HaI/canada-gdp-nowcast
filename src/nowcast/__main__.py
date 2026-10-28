@@ -1,5 +1,6 @@
 """Command line entry point.
 
+    python -m nowcast flash                          # add new GDP flash estimates from The Daily
     python -m nowcast fetch [--vintage YYYY-MM-DD]   # pull everything, save a dated snapshot
     python -m nowcast panel [--vintage latest]       # summarize the transformed panel
     python -m nowcast nowcast [--vintage latest]     # fit, print nowcast + news (records nothing)
@@ -7,7 +8,7 @@
     python -m nowcast report                         # build site/index.html
     python -m nowcast backtest --name base [--blocks global,real,output]
 
-The weekly job runs fetch, update, report.
+The weekly job runs flash, fetch, update, report.
 """
 from __future__ import annotations
 
@@ -42,6 +43,15 @@ def cmd_fetch(args) -> int:
     failed = {k: v for k, v in status.items() if v != "ok"}
     if failed:
         print(f"WARNING: sources failed: {failed}", file=sys.stderr)
+    return 0
+
+
+def cmd_flash(args) -> int:
+    from .flash import update
+    new = update()
+    print(f"{len(new)} new flash estimate(s)")
+    if len(new):
+        print(new.to_string(index=False))
     return 0
 
 
@@ -97,6 +107,7 @@ def main(argv=None) -> int:
     p = argparse.ArgumentParser(prog="nowcast")
     p.add_argument("--config", help="path to series.yaml (default: config/series.yaml)")
     sub = p.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("flash", help="add new GDP flash estimates from The Daily").set_defaults(func=cmd_flash)
     f = sub.add_parser("fetch", help="fetch all series and save a dated snapshot")
     f.add_argument("--vintage", help="snapshot date label (default: today)")
     f.set_defaults(func=cmd_fetch)

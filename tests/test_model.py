@@ -96,3 +96,14 @@ def test_prepare_drops_constant_and_short_series():
                  start="2000-01-01", target="gdp")
     mm, _ = M.prepare(m, q, cfg, idx[-1])
     assert list(mm) == ["ok"]
+
+
+def test_prepare_drops_series_kept_out_of_the_model():
+    idx = pd.period_range("2000-01", periods=40, freq="M")
+    m = pd.DataFrame({"x": np.arange(40.0), "kept_out": np.arange(40.0) ** 0.5}, index=idx)
+    q = pd.DataFrame({"gdp": np.arange(14.0)}, index=pd.period_range("2000Q1", periods=14, freq="Q"))
+    off = Series(key="kept_out", name="kept_out", source="manual", ids=("f.csv",), freq="M",
+                 transform="level", blocks=("global",), release_lag=0, model=False)
+    cfg = Config(series=(mk("x"), off, mk("gdp", freq="Q")), start="2000-01-01", target="gdp")
+    mm, _ = M.prepare(m, q, cfg, idx[-1])
+    assert list(mm) == ["x"]
