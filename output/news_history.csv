@@ -1,3 +1,13 @@
 vintage,quarter,previous_vintage,series,name,impact_ann,impact_qoq
 2026-10-28,2026Q3,2026-10-23,(revisions),(revisions),-0.0002,-0.0001
 2026-10-28,2026Q4,2026-10-23,(revisions),(revisions),0.0154,0.0038
+2026-10-30,2026Q3,2026-10-28,gdp_m,"Real GDP by industry, all industries",-0.4066,-0.0998
+2026-10-30,2026Q3,2026-10-28,gdp_services,"Real GDP, services-producing industries",-0.2271,-0.0557
+2026-10-30,2026Q3,2026-10-28,(revisions),(revisions),0.0832,0.0204
+2026-10-30,2026Q3,2026-10-28,gdp_goods,"Real GDP, goods-producing industries",-0.0340,-0.0083
+2026-10-30,2026Q3,2026-10-28,gdp_ip,"Real GDP, industrial production",-0.0001,-0.0000
+2026-10-30,2026Q4,2026-10-28,gdp_m,"Real GDP by industry, all industries",-0.3490,-0.0858
+2026-10-30,2026Q4,2026-10-28,gdp_services,"Real GDP, services-producing industries",0.0788,0.0194
+2026-10-30,2026Q4,2026-10-28,(revisions),(revisions),0.0278,0.0068
+2026-10-30,2026Q4,2026-10-28,gdp_goods,"Real GDP, goods-producing industries",-0.0222,-0.0055
+2026-10-30,2026Q4,2026-10-28,gdp_ip,"Real GDP, industrial production",-0.0002,-0.0001

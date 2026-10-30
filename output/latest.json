@@ -1,48 +1,88 @@
 {
-  "vintage": "2026-10-28",
-  "previous_vintage": "2026-10-23",
+  "vintage": "2026-10-30",
+  "previous_vintage": "2026-10-28",
   "nowcast": [
     {
       "quarter": "2026Q3",
-      "qoq": 0.5347040420137673,
-      "nowcast": 2.1618527848765945,
-      "sd_qoq": 0.2505219561565526,
-      "lo68": 1.14883098446521,
-      "hi68": 3.1850201614465945,
-      "lo90": 0.4917334352104952,
-      "hi90": 3.859728632980697
+      "qoq": 0.39295057134908906,
+      "nowcast": 1.5842200732341771,
+      "sd_qoq": 0.19129640046612983,
+      "lo68": 0.8141537839239765,
+      "hi68": 2.360168493849102,
+      "lo90": 0.31367490625722194,
+      "hi90": 2.8708576126901253
     },
     {
       "quarter": "2026Q4",
-      "qoq": 0.4554922381745961,
-      "nowcast": 1.8386680704317149,
-      "sd_qoq": 0.5384152987896345,
-      "lo68": -0.3192457242631286,
-      "hi68": 4.043296920396422,
-      "lo90": -1.7057725883217412,
-      "hi90": 5.510919485871879
+      "qoq": 0.3916261494887995,
+      "nowcast": 1.5788386013132039,
+      "sd_qoq": 0.5303453800502839,
+      "lo68": -0.5416477480822413,
+      "hi68": 3.744534450526049,
+      "lo90": -1.9044885099179787,
+      "hi90": 5.185857078026124
     }
   ],
   "news": {
     "2026Q3": {
-      "prev": 2.1620604261799903,
-      "post": 2.1618527848765945,
+      "prev": 2.1688549186696493,
+      "post": 1.5842200732341771,
       "items": [
         {
+          "series": "gdp_m",
+          "impact_ann": -0.40658446585041524,
+          "name": "Real GDP by industry, all industries"
+        },
+        {
+          "series": "gdp_services",
+          "impact_ann": -0.22713751922361422,
+          "name": "Real GDP, services-producing industries"
+        },
+        {
           "series": "(revisions)",
-          "impact_ann": -0.0002076413033959976,
+          "impact_ann": 0.0831647595206169,
           "name": "(revisions)"
+        },
+        {
+          "series": "gdp_goods",
+          "impact_ann": -0.03401755044835538,
+          "name": "Real GDP, goods-producing industries"
+        },
+        {
+          "series": "gdp_ip",
+          "impact_ann": -6.006943371107613e-05,
+          "name": "Real GDP, industrial production"
         }
       ]
     },
     "2026Q4": {
-      "prev": 1.8232328163629408,
-      "post": 1.8386680704317149,
+      "prev": 1.8437238050315718,
+      "post": 1.5788386013132039,
       "items": [
         {
+          "series": "gdp_m",
+          "impact_ann": -0.34900831730125853,
+          "name": "Real GDP by industry, all industries"
+        },
+        {
+          "series": "gdp_services",
+          "impact_ann": 0.07877481122708539,
+          "name": "Real GDP, services-producing industries"
+        },
+        {
           "series": "(revisions)",
-          "impact_ann": 0.015435254068773972,
+          "impact_ann": 0.027778415631627973,
           "name": "(revisions)"
+        },
+        {
+          "series": "gdp_goods",
+          "impact_ann": -0.022180453005742222,
+          "name": "Real GDP, goods-producing industries"
+        },
+        {
+          "series": "gdp_ip",
+          "impact_ann": -0.00024966027008390475,
+          "name": "Real GDP, industrial production"
         }
       ]
     }
