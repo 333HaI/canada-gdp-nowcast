@@ -11,3 +11,25 @@ vintage,quarter,previous_vintage,series,name,impact_ann,impact_qoq
 2026-10-30,2026Q4,2026-10-28,(revisions),(revisions),0.0278,0.0068
 2026-10-30,2026Q4,2026-10-28,gdp_goods,"Real GDP, goods-producing industries",-0.0222,-0.0055
 2026-10-30,2026Q4,2026-10-28,gdp_ip,"Real GDP, industrial production",-0.0002,-0.0001
+2026-11-06,2026Q3,2026-10-30,imports,"Merchandise imports, BOP basis",-0.0294,-0.0072
+2026-11-06,2026Q3,2026-10-30,us_payrolls,US nonfarm payrolls,-0.0152,-0.0037
+2026-11-06,2026Q3,2026-10-30,lfs_hours,LFS total actual hours worked,-0.0123,-0.0030
+2026-11-06,2026Q3,2026-10-30,lfs_emp,"LFS employment, 15+",-0.0091,-0.0022
+2026-11-06,2026Q3,2026-10-30,exports,"Merchandise exports, BOP basis",0.0076,0.0019
+2026-11-06,2026Q3,2026-10-30,bcpi,BoC commodity price index,-0.0020,-0.0005
+2026-11-06,2026Q3,2026-10-30,(revisions),(revisions),0.0016,0.0004
+2026-11-06,2026Q3,2026-10-30,policy_rate,Target for the overnight rate,-0.0010,-0.0003
+2026-11-06,2026Q3,2026-10-30,goc_10y,GoC 10-year benchmark yield,-0.0006,-0.0001
+2026-11-06,2026Q3,2026-10-30,ceer,Nominal CEER (monthly),-0.0001,-0.0000
+2026-11-06,2026Q3,2026-10-30,goc_2y,GoC 2-year benchmark yield,0.0000,0.0000
+2026-11-06,2026Q4,2026-10-30,us_payrolls,US nonfarm payrolls,0.2012,0.0496
+2026-11-06,2026Q4,2026-10-30,lfs_emp,"LFS employment, 15+",-0.1740,-0.0429
+2026-11-06,2026Q4,2026-10-30,lfs_hours,LFS total actual hours worked,-0.1499,-0.0370
+2026-11-06,2026Q4,2026-10-30,bcpi,BoC commodity price index,-0.0965,-0.0238
+2026-11-06,2026Q4,2026-10-30,imports,"Merchandise imports, BOP basis",-0.0955,-0.0235
+2026-11-06,2026Q4,2026-10-30,goc_10y,GoC 10-year benchmark yield,-0.0876,-0.0216
+2026-11-06,2026Q4,2026-10-30,goc_2y,GoC 2-year benchmark yield,-0.0395,-0.0098
+2026-11-06,2026Q4,2026-10-30,exports,"Merchandise exports, BOP basis",0.0256,0.0063
+2026-11-06,2026Q4,2026-10-30,policy_rate,Target for the overnight rate,0.0190,0.0047
+2026-11-06,2026Q4,2026-10-30,ceer,Nominal CEER (monthly),-0.0025,-0.0006
+2026-11-06,2026Q4,2026-10-30,(revisions),(revisions),0.0015,0.0004

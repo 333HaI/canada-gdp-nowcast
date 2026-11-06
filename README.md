@@ -4,7 +4,7 @@ Nowcast of Canadian real GDP growth (expenditure-based, q/q at an annual
 rate), re-estimated every Friday with a mixed-frequency dynamic factor model.
 
 <!-- nowcast:start (rewritten by the weekly job) -->
-Nowcast as of 2026-10-30: 2026Q3 1.6% (68%: 0.8 to 2.4), 2026Q4 1.6% (68%: -0.5 to 3.7).
+Nowcast as of 2026-11-06: 2026Q3 1.5% (68%: 0.8 to 2.3), 2026Q4 1.2% (68%: -0.7 to 3.1).
 
 Backtest 2010-2026 (excl. 2020Q1-2021Q1): RMSE 1.59 vs 2.23 for an AR(1) and 1.90 for a naive monthly GDP tracker.
 
