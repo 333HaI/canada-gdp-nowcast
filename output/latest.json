@@ -1,148 +1,78 @@
 {
-  "vintage": "2026-11-06",
-  "previous_vintage": "2026-10-30",
+  "vintage": "2026-11-13",
+  "previous_vintage": "2026-11-06",
   "nowcast": [
     {
       "quarter": "2026Q3",
-      "qoq": 0.3781659234185499,
-      "nowcast": 1.524162356465264,
-      "sd_qoq": 0.18833067219914898,
-      "lo68": 0.7664382231269418,
-      "hi68": 2.2875842783963707,
-      "lo90": 0.2739326484377136,
-      "hi90": 2.789980106983525
+      "qoq": 0.36207772060094917,
+      "nowcast": 1.4588497213825269,
+      "sd_qoq": 0.18703340604191349,
+      "lo68": 0.7068096936505786,
+      "hi68": 2.21650569708296,
+      "lo90": 0.21797780419070545,
+      "hi90": 2.715085779306503
     },
     {
       "quarter": "2026Q4",
-      "qoq": 0.29440436970722544,
-      "nowcast": 1.1845786921123924,
-      "sd_qoq": 0.4757843311980977,
-      "lo68": -0.7124225892368274,
-      "hi68": 3.117824325023877,
-      "lo90": -1.9338219037370652,
-      "hi90": 4.402141124029835
+      "qoq": 0.2323297248754717,
+      "nowcast": 0.9336504752395891,
+      "sd_qoq": 0.46982066110433923,
+      "lo68": -0.9351485744365284,
+      "hi68": 2.8377032989618467,
+      "lo90": -2.1386259983012357,
+      "hi90": 4.10237851433588
     }
   ],
   "news": {
     "2026Q3": {
-      "prev": 1.5847535635640897,
-      "post": 1.524162356465264,
+      "prev": 1.5255536951737758,
+      "post": 1.4588497213825269,
       "items": [
         {
-          "series": "imports",
-          "impact_ann": -0.029390898188886624,
-          "name": "Merchandise imports, BOP basis"
+          "series": "mfg_sales",
+          "impact_ann": -0.05612346151161726,
+          "name": "Real manufacturing sales (2017 $)"
         },
         {
-          "series": "us_payrolls",
-          "impact_ann": -0.015227410465837388,
-          "name": "US nonfarm payrolls"
-        },
-        {
-          "series": "lfs_hours",
-          "impact_ann": -0.01230548196191738,
-          "name": "LFS total actual hours worked"
-        },
-        {
-          "series": "lfs_emp",
-          "impact_ann": -0.009121325071471053,
-          "name": "LFS employment, 15+"
-        },
-        {
-          "series": "exports",
-          "impact_ann": 0.00755744931281824,
-          "name": "Merchandise exports, BOP basis"
-        },
-        {
-          "series": "bcpi",
-          "impact_ann": -0.002013580371152894,
-          "name": "BoC commodity price index"
+          "series": "wholesale_vol",
+          "impact_ann": -0.010798421064847182,
+          "name": "Wholesale sales, volume"
         },
         {
           "series": "(revisions)",
-          "impact_ann": 0.001569764013413826,
+          "impact_ann": 0.002557522443508744,
           "name": "(revisions)"
         },
         {
-          "series": "policy_rate",
-          "impact_ann": -0.0010380884932174926,
-          "name": "Target for the overnight rate"
-        },
-        {
-          "series": "goc_10y",
-          "impact_ann": -0.0005662761145846177,
-          "name": "GoC 10-year benchmark yield"
-        },
-        {
-          "series": "ceer",
-          "impact_ann": -6.244447573278323e-05,
-          "name": "Nominal CEER (monthly)"
-        },
-        {
-          "series": "goc_2y",
-          "impact_ann": 7.08471774271898e-06,
-          "name": "GoC 2-year benchmark yield"
+          "series": "permits",
+          "impact_ann": -0.0023396136582928334,
+          "name": "Building permits, total value"
         }
       ]
     },
     "2026Q4": {
-      "prev": 1.5827257035911257,
-      "post": 1.1845786921123924,
+      "prev": 1.177019036308491,
+      "post": 0.9336504752395891,
       "items": [
         {
-          "series": "us_payrolls",
-          "impact_ann": 0.20123234841060983,
-          "name": "US nonfarm payrolls"
+          "series": "mfg_sales",
+          "impact_ann": -0.18597847675798637,
+          "name": "Real manufacturing sales (2017 $)"
         },
         {
-          "series": "lfs_emp",
-          "impact_ann": -0.17397583738941744,
-          "name": "LFS employment, 15+"
-        },
-        {
-          "series": "lfs_hours",
-          "impact_ann": -0.14989753695177588,
-          "name": "LFS total actual hours worked"
-        },
-        {
-          "series": "bcpi",
-          "impact_ann": -0.0964851680999791,
-          "name": "BoC commodity price index"
-        },
-        {
-          "series": "imports",
-          "impact_ann": -0.0955019135441775,
-          "name": "Merchandise imports, BOP basis"
-        },
-        {
-          "series": "goc_10y",
-          "impact_ann": -0.08758735620677491,
-          "name": "GoC 10-year benchmark yield"
-        },
-        {
-          "series": "goc_2y",
-          "impact_ann": -0.039543952276255054,
-          "name": "GoC 2-year benchmark yield"
-        },
-        {
-          "series": "exports",
-          "impact_ann": 0.02562367566244967,
-          "name": "Merchandise exports, BOP basis"
-        },
-        {
-          "series": "policy_rate",
-          "impact_ann": 0.019026069959693727,
-          "name": "Target for the overnight rate"
-        },
-        {
-          "series": "ceer",
-          "impact_ann": -0.002517151609591089,
-          "name": "Nominal CEER (monthly)"
+          "series": "wholesale_vol",
+          "impact_ann": -0.040324454139410555,
+          "name": "Wholesale sales, volume"
         },
         {
           "series": "(revisions)",
-          "impact_ann": 0.001479810566484348,
+          "impact_ann": -0.009475107291653566,
           "name": "(revisions)"
+        },
+        {
+          "series": "permits",
+          "impact_ann": -0.007590522879851732,
+          "name": "Building permits, total value"
         }
       ]
     }

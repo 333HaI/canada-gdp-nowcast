@@ -33,3 +33,11 @@ vintage,quarter,previous_vintage,series,name,impact_ann,impact_qoq
 2026-11-06,2026Q4,2026-10-30,policy_rate,Target for the overnight rate,0.0190,0.0047
 2026-11-06,2026Q4,2026-10-30,ceer,Nominal CEER (monthly),-0.0025,-0.0006
 2026-11-06,2026Q4,2026-10-30,(revisions),(revisions),0.0015,0.0004
+2026-11-13,2026Q3,2026-11-06,mfg_sales,Real manufacturing sales (2017 $),-0.0561,-0.0138
+2026-11-13,2026Q3,2026-11-06,wholesale_vol,"Wholesale sales, volume",-0.0108,-0.0027
+2026-11-13,2026Q3,2026-11-06,(revisions),(revisions),0.0026,0.0006
+2026-11-13,2026Q3,2026-11-06,permits,"Building permits, total value",-0.0023,-0.0006
+2026-11-13,2026Q4,2026-11-06,mfg_sales,Real manufacturing sales (2017 $),-0.1860,-0.0460
+2026-11-13,2026Q4,2026-11-06,wholesale_vol,"Wholesale sales, volume",-0.0403,-0.0100
+2026-11-13,2026Q4,2026-11-06,(revisions),(revisions),-0.0095,-0.0023
+2026-11-13,2026Q4,2026-11-06,permits,"Building permits, total value",-0.0076,-0.0019
