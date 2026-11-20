@@ -1,78 +1,78 @@
 {
-  "vintage": "2026-11-13",
-  "previous_vintage": "2026-11-06",
+  "vintage": "2026-11-20",
+  "previous_vintage": "2026-11-13",
   "nowcast": [
     {
       "quarter": "2026Q3",
-      "qoq": 0.36207772060094917,
-      "nowcast": 1.4588497213825269,
-      "sd_qoq": 0.18703340604191349,
-      "lo68": 0.7068096936505786,
-      "hi68": 2.21650569708296,
-      "lo90": 0.21797780419070545,
-      "hi90": 2.715085779306503
+      "qoq": 0.37152854345541614,
+      "nowcast": 1.4972117566110388,
+      "sd_qoq": 0.18685390122886397,
+      "lo68": 0.745606740519511,
+      "hi68": 2.254424065352767,
+      "lo90": 0.2570547258046396,
+      "hi90": 2.752709248647478
     },
     {
       "quarter": "2026Q4",
-      "qoq": 0.2323297248754717,
-      "nowcast": 0.9336504752395891,
-      "sd_qoq": 0.46982066110433923,
-      "lo68": -0.9351485744365284,
-      "hi68": 2.8377032989618467,
-      "lo90": -2.1386259983012357,
-      "hi90": 4.10237851433588
+      "qoq": 0.22156100285736902,
+      "nowcast": 0.8901827807724638,
+      "sd_qoq": 0.457213638948897,
+      "lo68": -0.9281407542021225,
+      "hi68": 2.741879066627173,
+      "lo90": -2.09959899360751,
+      "hi90": 3.9712695443713253
     }
   ],
   "news": {
     "2026Q3": {
-      "prev": 1.5255536951737758,
-      "post": 1.4588497213825269,
+      "prev": 1.4595219974845586,
+      "post": 1.4972117566110388,
       "items": [
         {
-          "series": "mfg_sales",
-          "impact_ann": -0.05612346151161726,
-          "name": "Real manufacturing sales (2017 $)"
+          "series": "retail_sales",
+          "impact_ann": 0.042793140073138496,
+          "name": "Retail sales (nominal)"
         },
         {
-          "series": "wholesale_vol",
-          "impact_ann": -0.010798421064847182,
-          "name": "Wholesale sales, volume"
+          "series": "us_ip",
+          "impact_ann": -0.010200532058634276,
+          "name": "US industrial production"
         },
         {
           "series": "(revisions)",
-          "impact_ann": 0.002557522443508744,
+          "impact_ann": 0.004653583582269003,
           "name": "(revisions)"
         },
         {
-          "series": "permits",
-          "impact_ann": -0.0023396136582928334,
-          "name": "Building permits, total value"
+          "series": "housing_starts",
+          "impact_ann": 0.0004435675297071407,
+          "name": "Housing starts, all areas (SAAR)"
         }
       ]
     },
     "2026Q4": {
-      "prev": 1.177019036308491,
-      "post": 0.9336504752395891,
+      "prev": 0.9278943222849056,
+      "post": 0.8901827807724638,
       "items": [
         {
-          "series": "mfg_sales",
-          "impact_ann": -0.18597847675798637,
-          "name": "Real manufacturing sales (2017 $)"
+          "series": "us_ip",
+          "impact_ann": -0.20911111091148418,
+          "name": "US industrial production"
         },
         {
-          "series": "wholesale_vol",
-          "impact_ann": -0.040324454139410555,
-          "name": "Wholesale sales, volume"
+          "series": "retail_sales",
+          "impact_ann": 0.09368635486252012,
+          "name": "Retail sales (nominal)"
         },
         {
           "series": "(revisions)",
-          "impact_ann": -0.009475107291653566,
+          "impact_ann": 0.07252041936688626,
           "name": "(revisions)"
         },
         {
-          "series": "permits",
-          "impact_ann": -0.007590522879851732,
-          "name": "Building permits, total value"
+          "series": "housing_starts",
+          "impact_ann": 0.005192795169636324,
+          "name": "Housing starts, all areas (SAAR)"
         }
       ]
     }

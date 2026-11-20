@@ -41,3 +41,11 @@ vintage,quarter,previous_vintage,series,name,impact_ann,impact_qoq
 2026-11-13,2026Q4,2026-11-06,wholesale_vol,"Wholesale sales, volume",-0.0403,-0.0100
 2026-11-13,2026Q4,2026-11-06,(revisions),(revisions),-0.0095,-0.0023
 2026-11-13,2026Q4,2026-11-06,permits,"Building permits, total value",-0.0076,-0.0019
+2026-11-20,2026Q3,2026-11-13,retail_sales,Retail sales (nominal),0.0428,0.0105
+2026-11-20,2026Q3,2026-11-13,us_ip,US industrial production,-0.0102,-0.0025
+2026-11-20,2026Q3,2026-11-13,(revisions),(revisions),0.0047,0.0011
+2026-11-20,2026Q3,2026-11-13,housing_starts,"Housing starts, all areas (SAAR)",0.0004,0.0001
+2026-11-20,2026Q4,2026-11-13,us_ip,US industrial production,-0.2091,-0.0518
+2026-11-20,2026Q4,2026-11-13,retail_sales,Retail sales (nominal),0.0937,0.0232
+2026-11-20,2026Q4,2026-11-13,(revisions),(revisions),0.0725,0.0180
+2026-11-20,2026Q4,2026-11-13,housing_starts,"Housing starts, all areas (SAAR)",0.0052,0.0013
